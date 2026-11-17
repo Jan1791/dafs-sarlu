@@ -10,6 +10,7 @@ Dans le tableau de bord Supabase, ouvrir **SQL Editor** et exécuter les fichier
 2. `migrations/202611150002_public_inquiries.sql` autorise l’envoi public limité des demandes de contact.
 3. `migrations/202611150003_site_settings.sql` crée les coordonnées et informations d’entreprise modifiables depuis l’admin.
 4. `migrations/202611150004_data_integrity.sql` synchronise les dates de modification et limite les champs de profil modifiables.
+5. `migrations/202611170001_services_media.sql` ajoute les pages de services, la bibliothèque de médias et le bucket public `site-media` avec des droits d’écriture réservés aux administrateurs.
 
 ## Créer le premier compte administrateur
 
@@ -35,6 +36,14 @@ on conflict (user_id, role_id) do nothing;
 3. Configurer Resend comme SMTP de Supabase Auth (voir ci-dessous) et configurer les clés publique et secrète Cloudflare Turnstile dans l’hébergement de production.
 
 Le client public lit uniquement les propriétés publiées. La création, la modification, la publication et le téléversement des images demandent une session disposant d’un rôle actif. Le formulaire de contact passe par une route serveur, vérifie Turnstile en production et enregistre les demandes via des droits limités et une politique RLS d’insertion.
+
+## Services et bibliothèque de médias
+
+Après les quatre migrations initiales, exécuter la migration `202611170001_services_media.sql`. Elle crée les pages « Déménagement & aménagement » et « Cleaner », toutes deux publiées avec un texte de départ modifiable dans l’admin. La bibliothèque permet d’importer plusieurs fichiers ou un dossier complet, de reclasser chaque média, de l’associer à une page et de choisir s’il est public. Les vidéos sont transférées par blocs afin de reprendre plus fiablement les imports interrompus.
+
+Les médias locaux de `src/img` ne sont pas dans Git et ne sont pas automatiquement présents dans Supabase. Depuis **Admin → Services & médias → Bibliothèque médias**, sélectionnez le dossier `src/img` pour importer son contenu. `AMENAGEMENT`, `CONSTRUCTION`, `PLAN-3D` et `LOGO` sont classés à partir de leurs noms de dossier ; vérifiez chaque fiche et sa visibilité avant publication. Le lot fourni comprend environ 192 Mo : l’import dépend aussi de l’espace Storage disponible dans le projet.
+
+L’inspection des aperçus classe `AMENAGEMENT` comme déménagement/aménagement, `CONSTRUCTION` comme chantier et `PLAN-3D` comme architecture. Aucun lot n’identifie clairement des opérations de nettoyage : les photos de cette catégorie doivent être confirmées par le client avant d’être associées à Cleaner et publiées.
 
 ## Configurer Resend pour les courriels d’authentification
 

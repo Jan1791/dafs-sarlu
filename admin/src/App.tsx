@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, type ComponentType, type FormEvent, type ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "./lib/supabase";
+import SiteContentPage from "./site-content";
 import {
   Activity,
   ArrowDownRight,
@@ -44,6 +45,7 @@ import {
   SlidersHorizontal,
   Sparkles,
   TrendingUp,
+  Trash2,
   UserRound,
   Users,
   X,
@@ -58,7 +60,8 @@ type Page =
   | "estimates"
   | "users"
   | "reports"
-  | "settings";
+  | "settings"
+  | "site";
 
 const navGroups: {
   label: string;
@@ -71,6 +74,7 @@ const navGroups: {
       { id: "properties", label: "Immobilier", icon: Building2 },
       { id: "requests", label: "Réservations & demandes", icon: MessageSquareText },
       { id: "plans", label: "Plans architecturaux", icon: FolderKanban },
+      { id: "site", label: "Services & médias", icon: Globe2 },
       { id: "estimates", label: "Devis de construction", icon: FileText },
     ],
   },
@@ -93,6 +97,7 @@ const pageTitles: Record<Page, { title: string; crumb: string }> = {
   users: { title: "Utilisateurs", crumb: "Gestion des comptes" },
   reports: { title: "Rapports & analyses", crumb: "Performance" },
   settings: { title: "Paramètres généraux", crumb: "Configuration" },
+  site: { title: "Services & médias", crumb: "Contenu public" },
 };
 
 type PropertyRecord = {
@@ -100,25 +105,39 @@ type PropertyRecord = {
   ref: string;
   title: string;
   shortDescription?: string;
+  description?: string;
   kind: string;
   location: string;
+  address?: string;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  livingArea?: number | null;
+  landArea?: number | null;
   price: string;
   status: string;
   tone: "success" | "warning" | "neutral" | "danger";
   color: string;
   image?: string;
+  imagePath?: string;
 };
 
 type PropertyDraft = {
   title: string;
   shortDescription: string;
+  description: string;
   category: string;
   operation: string;
   city: string;
   municipality: string;
+  address: string;
   price: string;
   currency: string;
+  bedrooms: string;
+  bathrooms: string;
+  livingArea: string;
+  landArea: string;
   image: File | null;
+  removeImage: boolean;
 };
 
 type PlanRecord = {
@@ -127,6 +146,7 @@ type PlanRecord = {
   title: string;
   category: string;
   details: string;
+  description: string;
   status: string;
   tone: "success" | "warning" | "neutral";
   image?: string;
@@ -135,6 +155,7 @@ type PlanRecord = {
 
 type PlanDraft = {
   title: string;
+  description: string;
   category: string;
   area: string;
   bedrooms: string;
@@ -506,11 +527,13 @@ function PropertyPage({
   onAdd,
   onEdit,
   onTogglePublish,
+  onDelete,
 }: {
   properties: PropertyRecord[];
   onAdd: () => void;
   onEdit: (property: PropertyRecord) => void;
   onTogglePublish: (property: PropertyRecord) => void;
+  onDelete: (property: PropertyRecord) => void;
 }) {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("Tous les statuts");
@@ -689,6 +712,7 @@ function PropertyPage({
                         onClick={() => onTogglePublish(property)}
                         title={property.status === "Publiée" ? "Retirer du site public" : "Publier sur le site"}
                       />
+                      <Button variant="icon" icon={Trash2} onClick={() => onDelete(property)} title={`Supprimer ${property.title}`} />
                     </div>
                   </td>
                 </tr>
@@ -738,11 +762,13 @@ function PlansPage({
   onAdd,
   onEdit,
   onTogglePublish,
+  onDelete,
 }: {
   plans: PlanRecord[];
   onAdd: () => void;
   onEdit: (plan: PlanRecord) => void;
   onTogglePublish: (plan: PlanRecord) => void;
+  onDelete: (plan: PlanRecord) => void;
 }) {
   return (
     <div className="page-content">
@@ -773,6 +799,7 @@ function PlansPage({
                   <td><div className="row-actions">
                     <Button variant="icon" icon={Pencil} onClick={() => onEdit(plan)} title={`Modifier ${plan.title}`} />
                     <Button variant="icon" icon={Globe2} onClick={() => onTogglePublish(plan)} title={plan.status === "Publié" ? "Retirer du site public" : "Publier sur le site"} />
+                    <Button variant="icon" icon={Trash2} onClick={() => onDelete(plan)} title={`Supprimer ${plan.title}`} />
                   </div></td>
                 </tr>
               ))}
@@ -860,7 +887,7 @@ function PlanModal({
       : plan?.details.match(/R\+(\d+)/)?.[1]
         ? String(Number(plan.details.match(/R\+(\d+)/)?.[1]) + 1)
         : "";
-    return { title: plan?.title ?? "", category: plan?.category ?? "", area, bedrooms, floors, preview: null };
+    return { title: plan?.title ?? "", description: plan?.description ?? "", category: plan?.category ?? "", area, bedrooms, floors, preview: null };
   });
   const update = <K extends keyof PlanDraft>(key: K, value: PlanDraft[K]) =>
     setDraft((current) => ({ ...current, [key]: value }));
@@ -886,6 +913,7 @@ function PlanModal({
         <div className="modal-header"><div><p className="eyebrow">{plan ? "MODIFIER LE PLAN" : "NOUVEAU PLAN"}</p><h2>{plan ? "Modifier le plan" : "Ajouter un plan architectural"}</h2><span>Le plan sera enregistré comme brouillon.</span></div><Button variant="icon" icon={X} onClick={close} /></div>
         <div className="modal-body form-grid">
           <label className="full-field"><span>Nom du plan *</span><input required maxLength={200} value={draft.title} onChange={(event) => update("title", event.target.value)} /></label>
+          <label className="full-field"><span>Description publique</span><textarea rows={4} maxLength={10000} value={draft.description} onChange={(event) => update("description", event.target.value)} placeholder="Présentez le modèle et ses caractéristiques." /></label>
           <label><span>Catégorie</span><input maxLength={120} value={draft.category} onChange={(event) => update("category", event.target.value)} placeholder="Villa, maison…" /></label>
           <label><span>Surface bâtie (m²)</span><input type="number" min="1" step="0.01" value={draft.area} onChange={(event) => update("area", event.target.value)} /></label>
           <label><span>Chambres</span><input type="number" min="0" step="1" value={draft.bedrooms} onChange={(event) => update("bedrooms", event.target.value)} /></label>
@@ -900,7 +928,7 @@ function PlanModal({
 }
 
 const sectionData: Record<
-  Exclude<Page, "dashboard" | "properties" | "settings">,
+  Exclude<Page, "dashboard" | "properties" | "settings" | "site">,
   {
     eyebrow: string;
     description: string;
@@ -977,7 +1005,7 @@ const sectionData: Record<
   },
 };
 
-function ModulePage({ page }: { page: Exclude<Page, "dashboard" | "properties" | "settings"> }) {
+function ModulePage({ page }: { page: Exclude<Page, "dashboard" | "properties" | "settings" | "site"> }) {
   const data = sectionData[page];
   const rows: string[][] = [];
   return (
@@ -1237,13 +1265,20 @@ function PropertyModal({
     return {
       title: property?.title ?? "",
       shortDescription: property?.shortDescription ?? "",
+      description: property?.description ?? "",
       category,
       operation,
       city,
       municipality,
+      address: property?.address ?? "",
       price: amount,
       currency,
+      bedrooms: property?.bedrooms?.toString() ?? "",
+      bathrooms: property?.bathrooms?.toString() ?? "",
+      livingArea: property?.livingArea?.toString() ?? "",
+      landArea: property?.landArea?.toString() ?? "",
       image: null as File | null,
+      removeImage: false,
     };
   });
   const updateDraft = <Field extends keyof typeof draft>(field: Field, value: (typeof draft)[Field]) => {
@@ -1351,6 +1386,10 @@ function PropertyModal({
                 <span>Description courte</span>
                 <textarea rows={4} maxLength={500} value={draft.shortDescription} onChange={(event) => updateDraft("shortDescription", event.target.value)} placeholder="Présentez les principaux atouts du bien…" />
               </label>
+              <label className="full-field">
+                <span>Description détaillée</span>
+                <textarea rows={5} maxLength={10000} value={draft.description} onChange={(event) => updateDraft("description", event.target.value)} placeholder="Décrivez le bien, son état et les informations utiles aux visiteurs." />
+              </label>
             </div>
           )}
           {step === 2 && (
@@ -1369,8 +1408,12 @@ function PropertyModal({
               </label>
               <label className="full-field">
                 <span>Adresse</span>
-                <input placeholder="Avenue, numéro et repère" />
+                <input value={draft.address} onChange={(event) => updateDraft("address", event.target.value)} placeholder="Avenue, numéro et repère" />
               </label>
+              <label><span>Surface habitable (m²)</span><input type="number" min="0" step="0.01" value={draft.livingArea} onChange={(event) => updateDraft("livingArea", event.target.value)} /></label>
+              <label><span>Surface du terrain (m²)</span><input type="number" min="0" step="0.01" value={draft.landArea} onChange={(event) => updateDraft("landArea", event.target.value)} /></label>
+              <label><span>Chambres</span><input type="number" min="0" step="1" value={draft.bedrooms} onChange={(event) => updateDraft("bedrooms", event.target.value)} /></label>
+              <label><span>Salles d’eau</span><input type="number" min="0" step="1" value={draft.bathrooms} onChange={(event) => updateDraft("bathrooms", event.target.value)} /></label>
               <label>
                 <span>Prix (facultatif)</span>
                 <input
@@ -1392,12 +1435,14 @@ function PropertyModal({
               </label>
               <label className="full-field">
                 <span>Photo principale (facultative)</span>
+                {property?.image && !draft.removeImage && !draft.image && <div className="property-image-current"><img src={property.image} alt={`Photo actuelle de ${property.title}`} /><span>Photo actuelle</span><button type="button" onClick={() => updateDraft("removeImage", true)}>Supprimer cette photo</button></div>}
                 <input
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
-                  onChange={(event) => updateDraft("image", event.target.files?.[0] ?? null)}
+                  onChange={(event) => { updateDraft("image", event.target.files?.[0] ?? null); if (event.target.files?.[0]) updateDraft("removeImage", false); }}
                 />
                 {draft.image && <small>{draft.image.name}</small>}
+                {draft.removeImage && !draft.image && <small>La photo principale sera supprimée.</small>}
               </label>
             </div>
           )}
@@ -1414,7 +1459,7 @@ function PropertyModal({
               </p>
               <div>
                 <CheckCircle2 size={16} />
-                {draft.image ? "La photo principale sera téléversée avec l’annonce." : "L’annonce sera enregistrée sans photo."}
+                {draft.image ? "La photo principale sera remplacée." : draft.removeImage ? "La photo principale sera supprimée." : "L’annonce sera enregistrée sans nouvelle photo."}
               </div>
             </div>
           )}
@@ -1438,13 +1483,20 @@ function PropertyModal({
                   {
                     title: draft.title.trim(),
                     shortDescription: draft.shortDescription.trim(),
+                    description: draft.description.trim(),
                     category: draft.category,
                     operation: draft.operation,
                     city: draft.city.trim(),
                     municipality: draft.municipality.trim(),
+                    address: draft.address.trim(),
                     price: draft.price,
                     currency: draft.currency,
+                    bedrooms: draft.bedrooms,
+                    bathrooms: draft.bathrooms,
+                    livingArea: draft.livingArea,
+                    landArea: draft.landArea,
                     image: draft.image,
+                    removeImage: draft.removeImage,
                   },
                   property?.id,
                 );
@@ -1644,7 +1696,7 @@ function App() {
     setPropertiesError("");
     const { data, error } = await client
       .from("properties")
-      .select("id, reference, title, short_description, operation_type, publication_status, city, municipality, price_amount, currency, pricing_period, property_categories(name), property_images(storage_path, is_primary, sort_order)")
+      .select("id, reference, title, short_description, description, operation_type, publication_status, city, municipality, address, bedrooms, bathrooms, living_area_m2, land_area_m2, price_amount, currency, pricing_period, property_categories(name), property_images(storage_path, is_primary, sort_order)")
       .is("archived_at", null)
       .order("created_at", { ascending: false });
     if (error) {
@@ -1671,13 +1723,20 @@ function App() {
         ref: row.reference,
         title: row.title,
         shortDescription: row.short_description ?? "",
+        description: row.description ?? "",
         kind: `${row.property_categories?.name ?? "Bien immobilier"} · ${operation}`,
         location: [row.city, row.municipality].filter(Boolean).join(", ") || "Localisation à renseigner",
+        address: row.address ?? "",
+        bedrooms: row.bedrooms,
+        bathrooms: row.bathrooms,
+        livingArea: row.living_area_m2,
+        landArea: row.land_area_m2,
         price: amount,
         status,
         tone: status === "Publiée" ? "success" : status === "À valider" ? "warning" : "neutral",
         color: "image-one",
         image: imagePath ? client.storage.from("property-images").getPublicUrl(imagePath).data.publicUrl : undefined,
+        imagePath,
       };
     });
     setManagedProperties(records);
@@ -1689,7 +1748,7 @@ function App() {
     if (!client || !session) return;
     const { data, error } = await client
       .from("architectural_plans")
-      .select("id, reference, title, category, built_area_m2, bedrooms, floors, publication_status, preview_storage_path")
+      .select("id, reference, title, description, category, built_area_m2, bedrooms, floors, publication_status, preview_storage_path")
       .is("archived_at", null)
       .order("created_at", { ascending: false });
     if (error) {
@@ -1707,6 +1766,7 @@ function App() {
         id: row.id,
         ref: row.reference,
         title: row.title,
+        description: row.description ?? "",
         category: row.category ?? "",
         details,
         status,
@@ -1809,6 +1869,7 @@ function App() {
     const slugBase = draft.title.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
     const planData = {
       title: draft.title.trim(),
+      description: draft.description.trim() || null,
       slug: `${slugBase}-${id.slice(0, 8)}`,
       reference: existingPlan?.ref ?? `PLN-${id.slice(0, 8).toUpperCase()}`,
       category: draft.category.trim() || null,
@@ -1851,6 +1912,18 @@ function App() {
     if (error) {
       setPropertiesError("Le statut du plan n’a pas pu être modifié.");
       return;
+    }
+    await loadPlans();
+  };
+
+  const deletePlan = async (plan: PlanRecord) => {
+    if (!supabase || !window.confirm(`Supprimer définitivement le plan « ${plan.title} » ?`)) return;
+    setPropertiesError("");
+    const { error } = await supabase.from("architectural_plans").delete().eq("id", plan.id);
+    if (error) { setPropertiesError("Le plan n’a pas pu être supprimé."); return; }
+    if (plan.storagePath) {
+      const { error: storageError } = await supabase.storage.from("architectural-previews").remove([plan.storagePath]);
+      if (storageError) setPropertiesError("Le plan est supprimé, mais son aperçu est resté dans Storage.");
     }
     await loadPlans();
   };
@@ -1910,10 +1983,16 @@ function App() {
       category_id: category.id,
       title: draft.title.trim(),
       short_description: draft.shortDescription.trim() || null,
+      description: draft.description.trim() || null,
       slug: `${slugBase}-${id.slice(0, 8)}`,
       operation_type: operationType,
       city: draft.city.trim() || null,
       municipality: draft.municipality.trim() || null,
+      address: draft.address.trim() || null,
+      bedrooms: draft.bedrooms === "" ? null : Number(draft.bedrooms),
+      bathrooms: draft.bathrooms === "" ? null : Number(draft.bathrooms),
+      living_area_m2: draft.livingArea === "" ? null : Number(draft.livingArea),
+      land_area_m2: draft.landArea === "" ? null : Number(draft.landArea),
       price_amount: draft.price ? Number(draft.price) : null,
       currency: draft.price ? draft.currency || null : null,
       pricing_period: operationType === "short_rental" ? "night" : operationType === "long_rental" ? "month" : "fixed",
@@ -1924,9 +2003,15 @@ function App() {
       : await supabase.from("properties").insert({ ...propertyData, created_by: session.user.id });
     if (mutation.error) throw new Error("L’annonce n’a pas pu être enregistrée. Vérifiez les champs et les autorisations.");
 
+    const { data: currentPrimary } = await supabase.from("property_images")
+      .select("id, storage_path")
+      .eq("property_id", id)
+      .eq("is_primary", true)
+      .maybeSingle();
     if (draft.image) {
-      if (propertyId) {
-        await supabase.from("property_images").update({ is_primary: false }).eq("property_id", id);
+      if (currentPrimary) {
+        const { error: clearPrimaryError } = await supabase.from("property_images").update({ is_primary: false }).eq("id", currentPrimary.id);
+        if (clearPrimaryError) throw new Error("La photo actuelle ne peut pas être remplacée.");
       }
       const safeName = draft.image.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9._-]+/g, "-");
       const storagePath = `${id}/${crypto.randomUUID()}-${safeName}`;
@@ -1935,7 +2020,10 @@ function App() {
         contentType: draft.image.type,
         upsert: false,
       });
-      if (uploadError) throw new Error("L’annonce est enregistrée, mais la photo n’a pas pu être téléversée.");
+      if (uploadError) {
+        if (currentPrimary) await supabase.from("property_images").update({ is_primary: true }).eq("id", currentPrimary.id);
+        throw new Error("L’annonce est enregistrée, mais la photo n’a pas pu être téléversée.");
+      }
       const { error: imageError } = await supabase.from("property_images").insert({
         property_id: id,
         storage_path: storagePath,
@@ -1943,7 +2031,34 @@ function App() {
         is_primary: true,
         sort_order: 0,
       });
-      if (imageError) throw new Error("La photo a été téléversée, mais son association à l’annonce a échoué.");
+      if (imageError) {
+        await supabase.storage.from("property-images").remove([storagePath]);
+        if (currentPrimary) await supabase.from("property_images").update({ is_primary: true }).eq("id", currentPrimary.id);
+        throw new Error("La photo a été téléversée, mais son association à l’annonce a échoué.");
+      }
+      if (currentPrimary) {
+        await supabase.from("property_images").delete().eq("id", currentPrimary.id);
+        await supabase.storage.from("property-images").remove([currentPrimary.storage_path]);
+      }
+    } else if (draft.removeImage && currentPrimary) {
+      const { error: removeRowError } = await supabase.from("property_images").delete().eq("id", currentPrimary.id);
+      if (removeRowError) throw new Error("La photo principale n’a pas pu être supprimée.");
+      const { error: removeFileError } = await supabase.storage.from("property-images").remove([currentPrimary.storage_path]);
+      if (removeFileError) throw new Error("La photo n’est plus liée à l’annonce mais le fichier est resté dans Storage.");
+    }
+    await loadProperties();
+  };
+
+  const deleteProperty = async (property: PropertyRecord) => {
+    if (!supabase || !window.confirm(`Supprimer définitivement « ${property.title} » et toutes ses photos ?`)) return;
+    setPropertiesError("");
+    const { data: images, error: readError } = await supabase.from("property_images").select("storage_path").eq("property_id", property.id);
+    if (readError) { setPropertiesError("Les photos de cette annonce n’ont pas pu être identifiées."); return; }
+    const { error: deleteError } = await supabase.from("properties").delete().eq("id", property.id);
+    if (deleteError) { setPropertiesError("L’annonce n’a pas pu être supprimée."); return; }
+    if (images?.length) {
+      const { error: storageError } = await supabase.storage.from("property-images").remove(images.map((image) => image.storage_path));
+      if (storageError) setPropertiesError("L’annonce est supprimée, mais certaines photos sont restées dans Storage.");
     }
     await loadProperties();
   };
@@ -1982,6 +2097,7 @@ function App() {
             setModalOpen(true);
           }}
           onTogglePublish={(property) => { void togglePublication(property); }}
+          onDelete={(property) => { void deleteProperty(property); }}
         />
       );
     if (page === "plans")
@@ -1997,11 +2113,13 @@ function App() {
             setPlanModalOpen(true);
           }}
           onTogglePublish={(plan) => { void togglePlanPublication(plan); }}
+          onDelete={(plan) => { void deletePlan(plan); }}
         />
       );
     if (page === "requests")
       return <InquiriesPage inquiries={managedInquiries} onStatusChange={(inquiry, status) => { void updateInquiryStatus(inquiry, status); }} />;
     if (page === "settings") return <SettingsPage settings={companySettings} onSave={saveCompanySettings} />;
+    if (page === "site") return <SiteContentPage />;
     return <ModulePage page={page} />;
   }, [page, managedProperties, managedPlans, managedInquiries, companySettings]);
 

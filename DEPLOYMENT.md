@@ -48,6 +48,6 @@ Vercel détecte les applications Next.js et utilise les scripts `build` présent
 
 ## Périmètre actuellement opérationnel
 
-L’admin gère les annonces, les aperçus de plans, les demandes entrantes et les informations éditoriales de base (présentation, FAQ, mentions légales, coordonnées). Les sections barèmes/simulateur, gestion des comptes depuis l’interface, rapports et réservations détaillées restent à construire à partir des données et règles métier validées par DAFS Sarlu.
+L’admin gère les annonces (édition, photo principale et suppression complète), les plans, les demandes entrantes, les pages de services et la bibliothèque d’images/vidéos. Les informations éditoriales de base (accueil, présentation, FAQ, mentions légales, coordonnées) se règlent dans Paramètres. Les barèmes/simulateur, gestion des comptes depuis l’interface, rapports et réservations détaillées restent à construire à partir des règles métier validées par DAFS Sarlu.
 
 Les aperçus publics de plans sont pris dans le bucket public ; les fichiers originaux restent privés.

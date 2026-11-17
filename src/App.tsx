@@ -17,6 +17,8 @@ type Page =
   | "plan-detail"
   | "estimate"
   | "estimate-result"
+  | "services"
+  | "service-detail"
   | "about"
   | "contact"
   | "faq"
@@ -35,6 +37,8 @@ const pagePaths: Record<Page, string> = {
   "plan-detail": "/plans-architecturaux/fiche",
   estimate: "/estimation",
   "estimate-result": "/estimation/resultat",
+  services: "/services",
+  "service-detail": "/services",
   about: "/a-propos",
   contact: "/contact",
   faq: "/faq",
@@ -44,6 +48,7 @@ const pagePaths: Record<Page, string> = {
 
 function pageFromPath(pathname: string): Page {
   const normalizedPath = pathname.replace(/\/+$/, "") || "/";
+  if (normalizedPath.startsWith("/services/")) return "service-detail";
   return (
     (Object.entries(pagePaths).find(([, path]) => path === normalizedPath)?.[0] as Page) ??
     "system"
@@ -225,6 +230,8 @@ function propertyTarget(type: string): Page {
 }
 
 export type ArchitecturalPlan = { id: string; reference: string; name: string; meta: string; image: string; description: string; category: string };
+export type ServiceMedia = { id: string; title: string; description: string; url: string; alt: string; mimeType: string };
+export type PublicService = { id: string; slug: string; title: string; eyebrow: string; summary: string; body: string; features: string[]; media: ServiceMedia[] };
 export type SiteSettings = {
   company_name: string;
   legal_name: string;
@@ -246,6 +253,7 @@ const nav: { label: string; page: Page }[] = [
   { label: "Locations", page: "rentals" },
   { label: "Acheter", page: "sales" },
   { label: "Plans", page: "plans" },
+  { label: "Services", page: "services" },
   { label: "Estimation", page: "estimate" },
   { label: "À propos", page: "about" },
 ];
@@ -418,12 +426,47 @@ function PlanDetailPage({ plan, go }: { plan: ArchitecturalPlan; go: (page: Page
   );
 }
 
+function ServicesDirectory({ services, onSelect }: { services: PublicService[]; onSelect: (service: PublicService) => void }) {
+  return <>
+    <PageHero eyebrow="Nos services" title="Des solutions pour votre quotidien" text="Découvrez les services proposés par DAFS Sarlu." />
+    <section className="section container service-public-list">
+      {services.length ? <div className="service-public-grid">{services.map((service, index) => {
+        const cover = service.media.find((asset) => asset.mimeType.startsWith("image/"));
+        return <button className="service-public-card" key={service.id} onClick={() => onSelect(service)}>
+          <div className="service-public-image">{cover ? <img src={cover.url} alt={cover.alt || cover.title} loading="lazy" /> : <span>{String(index + 1).padStart(2, "0")}</span>}</div>
+          <div className="service-public-copy"><span className="eyebrow">{service.eyebrow || "DAFS Sarlu"}</span><h2>{service.title}</h2><p>{service.summary}</p><span className="text-link">Découvrir le service <Icon name="arrow" size={16} /></span></div>
+        </button>;
+      })}</div> : <PublishedContentEmpty title="Nos services seront bientôt présentés" description="Les pages de services apparaîtront dès leur publication depuis l’espace d’administration." />}
+    </section>
+  </>;
+}
+
+function PublicServicePage({ service, go }: { service: PublicService; go: (page: Page) => void }) {
+  return <>
+    <PageHero eyebrow={service.eyebrow || "Nos services"} title={service.title} text={service.summary} />
+    <main className="container public-service-detail">
+      <div className="public-service-intro">
+        <div className="editorial-page">{service.body.split(/\n\s*\n/).filter(Boolean).map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div>
+        {service.features.length > 0 && <section className="public-service-features"><span className="eyebrow">Notre accompagnement</span><ul>{service.features.map((feature) => <li key={feature}><Icon name="check" size={18} />{feature}</li>)}</ul></section>}
+        <button className="btn navy" onClick={() => go("contact")}>Demander ce service <Icon name="arrow" /></button>
+      </div>
+      {!!service.media.length && <section className="public-service-media" aria-label={`Médias : ${service.title}`}>
+        {service.media.map((asset) => asset.mimeType.startsWith("video/")
+          ? <figure key={asset.id}><video controls preload="metadata" src={asset.url} aria-label={asset.title} /><figcaption>{asset.description || asset.title}</figcaption></figure>
+          : <figure key={asset.id}><img src={asset.url} alt={asset.alt || asset.title} loading="lazy" /><figcaption>{asset.description || asset.title}</figcaption></figure>)}
+      </section>}
+    </main>
+  </>;
+}
+
 function HomePage({
   go,
   onSelectProperty,
   settings,
   properties,
   plans,
+  services,
+  onSelectService,
   loading,
   loadError,
 }: {
@@ -432,6 +475,8 @@ function HomePage({
   settings: SiteSettings;
   properties: PropertyListing[];
   plans: ArchitecturalPlan[];
+  services: PublicService[];
+  onSelectService: (service: PublicService) => void;
   loading: boolean;
   loadError: boolean;
 }) {
@@ -544,6 +589,7 @@ function HomePage({
           ))}
         </div>
       </section>
+      {services.length > 0 && <section className="section service-home-section"><div className="container"><div className="split-heading"><SectionHead eyebrow="Au-delà de l’immobilier" title="Nos services" text="Un accompagnement pratique pour organiser et prendre soin de vos espaces." /><button className="text-link" onClick={() => go("services")}>Tous nos services <Icon name="arrow" size={17} /></button></div><div className="service-home-grid">{services.slice(0, 2).map((service) => { const cover = service.media.find((asset) => asset.mimeType.startsWith("image/")); return <button key={service.id} className="service-home-card" onClick={() => onSelectService(service)}>{cover ? <img src={cover.url} alt={cover.alt || cover.title} loading="lazy" /> : <span className="service-home-placeholder"><Icon name="sparkle" size={28} /></span>}<span><small>{service.eyebrow || "DAFS Sarlu"}</small><strong>{service.title}</strong><em>{service.summary}</em></span><span className="round-arrow"><Icon name="arrow" /></span></button>; })}</div></div></section>}
       <section className="section soft-bg">
         <div className="container">
           <div className="split-heading">
@@ -1038,6 +1084,8 @@ function ContactPage({ settings }: { settings: SiteSettings }) {
       "Achat immobilier": "property",
       "Plan architectural": "plan",
       "Estimation de construction": "estimate",
+      "Déménagement & aménagement": "general",
+      "Cleaner / nettoyage": "general",
       "Autre demande": "general",
     };
     try {
@@ -1116,6 +1164,8 @@ function ContactPage({ settings }: { settings: SiteSettings }) {
               <option>Achat immobilier</option>
               <option>Plan architectural</option>
               <option>Estimation de construction</option>
+              <option>Déménagement & aménagement</option>
+              <option>Cleaner / nettoyage</option>
               <option>Autre demande</option>
             </select>
           </label>
@@ -1264,11 +1314,13 @@ export default function App({
   initialProperties,
   initialPlans,
   initialSettings,
+  initialServices = [],
   initialDataError = false,
 }: {
   initialProperties: PropertyListing[];
   initialPlans: ArchitecturalPlan[];
   initialSettings: SiteSettings;
+  initialServices?: PublicService[];
   initialDataError?: boolean;
 }) {
   const pathname = usePathname();
@@ -1277,6 +1329,7 @@ export default function App({
   const [page, setPage] = useState<Page>(() => pageFromPath(pathname));
   const [properties, setProperties] = useState<PropertyListing[]>(initialProperties);
   const [plans, setPlans] = useState<ArchitecturalPlan[]>(initialPlans);
+  const [services, setServices] = useState<PublicService[]>(initialServices);
   const [propertiesLoading, setPropertiesLoading] = useState(false);
   const [propertiesLoadError, setPropertiesLoadError] = useState(initialDataError);
 
@@ -1371,6 +1424,46 @@ export default function App({
 
   useEffect(() => {
     let active = true;
+    const loadPublishedServices = async () => {
+      const client = supabase;
+      if (!client) return;
+      const [serviceResult, mediaResult] = await Promise.all([
+        client.from("service_pages").select("id, slug, title, eyebrow, summary, body, features").eq("publication_status", "published").order("sort_order").order("title"),
+        client.from("media_assets").select("id, service_id, title, description, alt_text, mime_type, storage_path").eq("is_published", true).order("sort_order").order("created_at"),
+      ]);
+      if (!active || serviceResult.error || mediaResult.error) return;
+      const mediaByService = new Map<string, ServiceMedia[]>();
+      for (const asset of mediaResult.data ?? []) {
+        if (!asset.service_id) continue;
+        const list = mediaByService.get(asset.service_id) ?? [];
+        list.push({
+          id: asset.id,
+          title: asset.title,
+          description: asset.description ?? "",
+          alt: asset.alt_text ?? "",
+          mimeType: asset.mime_type,
+          url: client.storage.from("site-media").getPublicUrl(asset.storage_path).data.publicUrl,
+        });
+        mediaByService.set(asset.service_id, list);
+      }
+      setServices((serviceResult.data ?? []).map((service) => ({
+        id: service.id,
+        slug: service.slug,
+        title: service.title,
+        eyebrow: service.eyebrow ?? "",
+        summary: service.summary ?? "",
+        body: service.body ?? "",
+        features: Array.isArray(service.features) ? service.features.filter((item): item is string => typeof item === "string") : [],
+        media: mediaByService.get(service.id) ?? [],
+      })));
+    };
+    void loadPublishedServices();
+    window.addEventListener("focus", loadPublishedServices);
+    return () => { active = false; window.removeEventListener("focus", loadPublishedServices); };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
     const loadPublishedPlans = async () => {
       const client = supabase;
       if (!client) return;
@@ -1420,13 +1513,20 @@ export default function App({
     router.push(`${pagePaths["plan-detail"]}?id=${encodeURIComponent(plan.id)}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+  const selectService = (service: PublicService) => {
+    router.push(`/services/${encodeURIComponent(service.slug)}`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
   const selectedProperty = properties.find((property) => property.id === searchParams.get("id"));
   const selectedPlan = plans.find((plan) => plan.id === searchParams.get("id"));
+  const selectedService = services.find((service) => service.slug === decodeURIComponent(pathname.split("/").filter(Boolean).at(-1) ?? ""));
   const content: Record<Page, React.ReactNode> = {
-    home: <HomePage go={go} onSelectProperty={selectProperty} settings={initialSettings} properties={properties} plans={plans} loading={propertiesLoading} loadError={propertiesLoadError} />,
+    home: <HomePage go={go} onSelectProperty={selectProperty} settings={initialSettings} properties={properties} plans={plans} services={services} onSelectService={selectService} loading={propertiesLoading} loadError={propertiesLoadError} />,
     rentals: <CataloguePage mode="rentals" go={go} onSelectProperty={selectProperty} properties={properties} loading={propertiesLoading} loadError={propertiesLoadError} />,
     sales: <CataloguePage mode="sales" go={go} onSelectProperty={selectProperty} properties={properties} loading={propertiesLoading} loadError={propertiesLoadError} />,
     plans: <PlansPage go={go} plans={plans} onSelectPlan={selectPlan} />,
+    services: <ServicesDirectory services={services} onSelect={selectService} />,
+    "service-detail": selectedService ? <PublicServicePage service={selectedService} go={go} /> : <ServicesDirectory services={services} onSelect={selectService} />,
     detail: (
       selectedProperty ? <PropertyDetailPage property={selectedProperty} go={go} /> : <EmptyPublicPage title="Fiche logement" description="Cette fiche sera disponible après la publication d’un logement." go={go} />
     ),

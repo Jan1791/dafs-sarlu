@@ -12,4 +12,4 @@ Dans Supabase **Authentication → URL Configuration**, ajouter l’URL HTTPS de
 
 Le dépôt GitHub contient les deux applications. Dans Vercel, importer ce dépôt et définir **Root Directory** sur admin. Le guide commun se trouve dans ../DEPLOYMENT.md.
 
-Les annonces, plans, demandes clients et coordonnées sont gérés par l’admin. Les modules barèmes/simulateur, gestion des utilisateurs, rapports et réservations détaillées nécessitent encore leur modèle de données et leurs règles métier.
+L’admin gère les annonces (dont leur suppression et le remplacement de la photo principale), les plans, les demandes, les pages « Déménagement & aménagement » et « Cleaner », et une bibliothèque de médias avec import par dossier, classement, association à un service et publication contrôlée. Après la migration 202611170001, les textes d’accueil, À propos, FAQ, informations légales et coordonnées se modifient aussi dans Paramètres. Les barèmes/simulateur, gestion des utilisateurs, rapports et réservations détaillées nécessitent encore leurs règles métier.

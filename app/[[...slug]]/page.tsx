@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import App, { type ArchitecturalPlan, type PropertyListing, type SiteSettings } from "../../src/App";
+import App, { type ArchitecturalPlan, type PropertyListing, type PublicService, type ServiceMedia, type SiteSettings } from "../../src/App";
 
 export const dynamic = "force-dynamic";
 
@@ -7,6 +7,7 @@ async function loadPublishedContent(): Promise<{
   properties: PropertyListing[];
   plans: ArchitecturalPlan[];
   settings: SiteSettings;
+  services: PublicService[];
   error: boolean;
 }> {
   const defaultSettings: SiteSettings = {
@@ -26,7 +27,7 @@ async function loadPublishedContent(): Promise<{
   };
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-  if (!url || !key) return { properties: [], plans: [], settings: defaultSettings, error: true };
+  if (!url || !key) return { properties: [], plans: [], settings: defaultSettings, services: [], error: true };
 
   const client = createClient(url, key, {
     auth: { autoRefreshToken: false, persistSession: false },
@@ -37,7 +38,7 @@ async function loadPublishedContent(): Promise<{
   });
 
   try {
-    const [propertyResult, planResult, settingsResult] = await Promise.all([
+    const [propertyResult, planResult, settingsResult, serviceResult, mediaResult] = await Promise.all([
       client
         .from("properties")
         .select(
@@ -57,10 +58,22 @@ async function loadPublishedContent(): Promise<{
         .select("settings")
         .eq("id", "global")
         .maybeSingle(),
+      client
+        .from("service_pages")
+        .select("id, slug, title, eyebrow, summary, body, features")
+        .eq("publication_status", "published")
+        .order("sort_order")
+        .order("title"),
+      client
+        .from("media_assets")
+        .select("id, service_id, title, description, alt_text, mime_type, storage_path")
+        .eq("is_published", true)
+        .order("sort_order")
+        .order("created_at"),
     ]);
 
     if (propertyResult.error || planResult.error || settingsResult.error) {
-      return { properties: [], plans: [], settings: defaultSettings, error: true };
+      return { properties: [], plans: [], settings: defaultSettings, services: [], error: true };
     }
 
     const properties = (propertyResult.data ?? []).map((row: any) => {
@@ -154,13 +167,39 @@ async function loadPublishedContent(): Promise<{
       home_title: typeof values.home_title === "string" ? values.home_title : "",
       home_intro: typeof values.home_intro === "string" ? values.home_intro : "",
     };
-    return { properties, plans, settings, error: false };
+    const mediaByService = new Map<string, ServiceMedia[]>();
+    if (!mediaResult.error) {
+      for (const asset of mediaResult.data ?? []) {
+        if (!asset.service_id) continue;
+        const items = mediaByService.get(asset.service_id) ?? [];
+        items.push({
+          id: asset.id,
+          title: asset.title,
+          description: asset.description ?? "",
+          alt: asset.alt_text ?? "",
+          mimeType: asset.mime_type,
+          url: client.storage.from("site-media").getPublicUrl(asset.storage_path).data.publicUrl,
+        });
+        mediaByService.set(asset.service_id, items);
+      }
+    }
+    const services: PublicService[] = (serviceResult.error ? [] : serviceResult.data ?? []).map((service) => ({
+      id: service.id,
+      slug: service.slug,
+      title: service.title,
+      eyebrow: service.eyebrow ?? "",
+      summary: service.summary ?? "",
+      body: service.body ?? "",
+      features: Array.isArray(service.features) ? service.features.filter((item): item is string => typeof item === "string") : [],
+      media: mediaByService.get(service.id) ?? [],
+    }));
+    return { properties, plans, settings, services, error: false };
   } catch {
-    return { properties: [], plans: [], settings: defaultSettings, error: true };
+    return { properties: [], plans: [], settings: defaultSettings, services: [], error: true };
   }
 }
 
 export default async function SitePage() {
-  const { properties, plans, settings, error } = await loadPublishedContent();
-  return <App initialProperties={properties} initialPlans={plans} initialSettings={settings} initialDataError={error} />;
+  const { properties, plans, settings, services, error } = await loadPublishedContent();
+  return <App initialProperties={properties} initialPlans={plans} initialSettings={settings} initialServices={services} initialDataError={error} />;
 }

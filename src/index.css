@@ -2827,3 +2827,60 @@ footer {
   .detail-gallery-main { grid-column: 1 / -1; grid-row: span 1; }
   .plan-detail-preview { min-height: 260px; }
 }
+
+.service-public-list { padding-block: 72px 100px; }
+.service-public-grid,
+.service-home-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+.service-public-card,
+.service-home-card { overflow: hidden; border: 1px solid #e4e1d9; border-radius: 12px; background: white; color: #14263d; text-align: left; }
+.service-public-card { display: grid; grid-template-columns: 42% 1fr; min-height: 290px; transition: transform .2s ease, box-shadow .2s ease; }
+.service-public-card:hover,
+.service-home-card:hover { transform: translateY(-4px); box-shadow: 0 18px 40px rgb(20 38 61 / 10%); }
+.service-public-image { display: grid; min-height: 100%; place-items: center; overflow: hidden; background: linear-gradient(140deg, #14263d, #294765); color: #c6a46a; font: 600 40px "Manrope", sans-serif; }
+.service-public-image img { width: 100%; height: 100%; min-height: 290px; object-fit: cover; }
+.service-public-copy { display: flex; flex-direction: column; align-items: start; padding: 28px; }
+.service-public-copy .eyebrow { color: #a47d42; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; }
+.service-public-copy h2 { margin: 14px 0 8px; font: 700 23px/1.2 "Manrope", sans-serif; }
+.service-public-copy p { margin: 0 0 20px; color: #687386; font-size: 13px; line-height: 1.7; }
+.service-public-copy .text-link { margin-top: auto; display: inline-flex; align-items: center; gap: 8px; font-size: 12px; }
+.service-home-section { background: #f1efe9; }
+.service-home-grid { margin-top: 28px; }
+.service-home-card { position: relative; display: grid; grid-template-columns: 38% 1fr; align-items: stretch; min-height: 195px; }
+.service-home-card > img,
+.service-home-placeholder { width: 100%; height: 100%; min-height: 195px; object-fit: cover; }
+.service-home-placeholder { display: grid; place-items: center; color: #c6a46a; background: #14263d; }
+.service-home-card > span:nth-child(2) { display: grid; align-content: center; gap: 8px; padding: 24px 55px 24px 24px; }
+.service-home-card small { color: #a47d42; font-size: 9px; letter-spacing: .12em; text-transform: uppercase; }
+.service-home-card strong { font: 700 19px/1.25 "Manrope", sans-serif; }
+.service-home-card em { color: #687386; font-size: 12px; line-height: 1.6; font-style: normal; }
+.service-home-card .round-arrow { position: absolute; right: 17px; bottom: 17px; }
+.public-service-detail { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 48px; padding-block: 68px 100px; align-items: start; }
+.public-service-intro .editorial-page { padding: 0 0 24px; }
+.public-service-features { margin: 18px 0 28px; padding: 22px; border: 1px solid #e7e9ed; border-radius: 10px; }
+.public-service-features .eyebrow { color: #9a835e; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; }
+.public-service-features ul { display: grid; gap: 12px; margin: 18px 0 0; padding: 0; list-style: none; }
+.public-service-features li { display: flex; gap: 10px; align-items: start; color: #4d5a6b; font-size: 13px; line-height: 1.5; }
+.public-service-features li svg { flex: 0 0 auto; color: #a47d42; }
+.public-service-media { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.public-service-media figure { position: relative; min-height: 190px; margin: 0; overflow: hidden; border-radius: 10px; background: #f0efeb; }
+.public-service-media img,
+.public-service-media video { width: 100%; height: 100%; min-height: 190px; object-fit: cover; }
+.public-service-media figcaption { position: absolute; inset: auto 0 0; padding: 24px 12px 10px; color: white; font-size: 11px; background: linear-gradient(transparent, rgb(0 0 0 / 65%)); }
+@media (max-width: 800px) {
+  .service-public-grid,
+  .service-home-grid,
+  .public-service-detail { grid-template-columns: 1fr; }
+  .service-public-card { min-height: 230px; }
+  .service-public-image img { min-height: 230px; }
+  .public-service-detail { gap: 28px; padding-block: 42px 72px; }
+}
+@media (max-width: 520px) {
+  .service-public-card { grid-template-columns: 1fr; }
+  .service-public-image,
+  .service-public-image img { min-height: 180px; }
+  .service-public-copy { padding: 22px; }
+  .service-home-card { grid-template-columns: 1fr; }
+  .service-home-card > img,
+  .service-home-placeholder { max-height: 190px; }
+  .public-service-media { grid-template-columns: 1fr; }
+}
