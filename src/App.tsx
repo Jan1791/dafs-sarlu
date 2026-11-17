@@ -32,7 +32,7 @@ const pagePaths: Record<Page, string> = {
   plans: "/plans-architecturaux",
   detail: "/locations/courte-duree/fiche",
   "long-detail": "/locations/longue-duree/fiche",
-  "house-detail": "/maisons-a-vendre/fiche",
+  "house-detail": "/biens-a-vendre/fiche",
   "land-detail": "/parcelles-a-vendre/fiche",
   "plan-detail": "/plans-architecturaux/fiche",
   estimate: "/estimation",
@@ -48,6 +48,7 @@ const pagePaths: Record<Page, string> = {
 
 function pageFromPath(pathname: string): Page {
   const normalizedPath = pathname.replace(/\/+$/, "") || "/";
+  if (normalizedPath === "/maisons-a-vendre/fiche") return "house-detail";
   if (normalizedPath.startsWith("/services/")) return "service-detail";
   return (
     (Object.entries(pagePaths).find(([, path]) => path === normalizedPath)?.[0] as Page) ??
@@ -60,6 +61,7 @@ type IconName =
   | "bed"
   | "building"
   | "calendar"
+  | "chat"
   | "check"
   | "chevron"
   | "clock"
@@ -102,6 +104,12 @@ function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
       <>
         <rect x="3" y="5" width="18" height="16" rx="2" />
         <path d="M16 3v4M8 3v4M3 10h18" />
+      </>
+    ),
+    chat: (
+      <>
+        <path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.5 8.7 8.7 0 0 1-4.1-1L3 21l1.7-4.8a8.4 8.4 0 0 1-.7-3.4 8.5 8.5 0 1 1 17 0Z" />
+        <path d="M8 12h.01M12 12h.01M16 12h.01" />
       </>
     ),
     check: <path d="m5 12 4 4L19 6" />,
@@ -213,6 +221,7 @@ export type PropertyListing = {
   meta: string;
   price: string;
   priceAmount: number | null;
+  isNegotiable?: boolean;
   currency: string | null;
   pricingPeriod: string | null;
   image: string;
@@ -222,12 +231,104 @@ export type PropertyListing = {
   livingArea: number | null;
   landArea: number | null;
   address: string;
-  images: { src: string; alt: string; caption: string }[];
+  images: { src: string; alt: string; caption: string; mimeType?: string }[];
 };
+
+const kinshasaSeedListingImage = (path: string, alt: string) => ({
+  src: path,
+  alt,
+  caption: "",
+});
+
+export const starterProperties: PropertyListing[] = [
+  {
+    id: "00000000-0000-4000-8000-000000000101",
+    reference: "DAFS-BDL-001",
+    name: "Maison basse avec parcelle à Bandalungwa",
+    city: "Kinshasa, Bandalungwa, Bandal Molard",
+    type: "Maison · Vente",
+    meta: "186 m² de parcelle · 3 chambres · 2 salles d’eau",
+    price: "240 000 $US · à discuter",
+    priceAmount: 240000,
+    currency: "USD",
+    pricingPeriod: "fixed",
+    image: "/property-media/bandal/bandal-01.jpg",
+    description: "Parcelle habitable située à Bandal Molard, dans un environnement résidentiel calme et sur une avenue asphaltée. La maison comprend 3 chambres, 2 salles d’eau, une cuisine, un salon spacieux, une véranda et un parking. Dimensions annoncées : 9,30 m × 20 m (environ 186 m²). Prix annoncé : 240 000 USD, à discuter. Repère communiqué : direction Maman Colonel. Adresse exacte à préciser auprès de DAFS Sarlu.",
+    bedrooms: 3,
+    bathrooms: 2,
+    livingArea: null,
+    landArea: 186,
+    address: "Repère communiqué : direction Maman Colonel · adresse exacte à confirmer",
+    images: [1, 2, 3, 4].map((n) => kinshasaSeedListingImage(`/property-media/bandal/bandal-${String(n).padStart(2, "0")}.jpg`, `Maison à vendre à Bandal Molard, vue ${n}`)),
+  },
+  {
+    id: "00000000-0000-4000-8000-000000000102",
+    reference: "DAFS-LNG-001",
+    name: "Immeuble de 7 appartements à Lingwala",
+    city: "Kinshasa, Lingwala, Mushi",
+    type: "Immeuble · Vente",
+    meta: "7 appartements · 2 boutiques · Parking · Terrasse",
+    price: "900 000 $US",
+    priceAmount: 900000,
+    currency: "USD",
+    pricingPeriod: "fixed",
+    image: "/property-media/lingwala/lingwala-01.jpg",
+    description: "Immeuble annoncé avec 7 appartements neufs, un parking au rez-de-chaussée, 2 boutiques et une grande terrasse au dernier niveau. Le propriétaire indique une ligne électrique privée disponible 24 h/24 et 7 j/7 ainsi qu’un approvisionnement en eau. Année de construction annoncée : 2026 ; terrain acquis en 2024. Document mentionné : CE. Prix annoncé : 900 000 USD, offre directe. Adresse complète à renseigner.",
+    bedrooms: null,
+    bathrooms: null,
+    livingArea: null,
+    landArea: null,
+    address: "",
+    images: [kinshasaSeedListingImage("/property-media/lingwala/lingwala-01.jpg", "Immeuble à vendre à Lingwala, Mushi")],
+  },
+  {
+    id: "00000000-0000-4000-8000-000000000103",
+    reference: "DAFS-MNG-001",
+    name: "Parcelle avec maisons locatives à Mont-Ngafula",
+    city: "Kinshasa, Mont-Ngafula, CPA",
+    type: "Parcelle · Vente",
+    meta: "Environ 360 m² · Maisons locatives",
+    price: "330 000 $US · à discuter",
+    priceAmount: 330000,
+    currency: "USD",
+    pricingPeriod: "fixed",
+    image: "/property-media/mont-ngafula/mont-ngafula-01.jpg",
+    description: "Parcelle mise en vente dans la commune de Mont-Ngafula, secteur CPA Mushi, quartier CPA. Dimensions annoncées : 18 m × 20 m (environ 360 m²), avec des maisons destinées à la location. Revenu mensuel indiqué par le vendeur : 3 000 USD ; ce montant reste à vérifier avec le vendeur. Prix annoncé : 330 000 USD, à discuter. Adresse exacte à compléter.",
+    bedrooms: null,
+    bathrooms: null,
+    livingArea: null,
+    landArea: 360,
+    address: "CPA Mushi · adresse exacte à confirmer",
+    images: Array.from({ length: 15 }, (_, i) => i + 1).map((n) => kinshasaSeedListingImage(`/property-media/mont-ngafula/mont-ngafula-${String(n).padStart(2, "0")}.jpg`, `Parcelle à vendre à Mont-Ngafula, vue ${n}`)),
+  },
+  {
+    id: "00000000-0000-4000-8000-000000000104",
+    reference: "DAFS-NGL-001",
+    name: "Villa et appartements à Ngaliema",
+    city: "Kinshasa, Ngaliema",
+    type: "Villa · Vente",
+    meta: "Environ 1 800 m² · 5 chambres · 6 appartements",
+    price: "2 300 000 $US · à discuter",
+    priceAmount: 2300000,
+    currency: "USD",
+    pricingPeriod: "fixed",
+    image: "/property-media/ngaliema/ngaliema-tour-cover.jpg",
+    description: "Ensemble situé à Ngaliema, avec une villa annoncée de 5 chambres, 2 salons, cuisine équipée et 4 salles de bain, ainsi que 6 appartements de 2 chambres chacun. La description mentionne également terrasse, bar, piscine, jardin et 2 groupes électrogènes. Dimensions annoncées : 30 m × 60 m (environ 1 800 m²). Prix annoncé pour l’ensemble : 2 300 000 USD, à discuter. Une division en deux lots de 30 m × 30 m avec la villa principale est également évoquée, au prix indicatif de 1 500 000 USD. Repère communiqué : Météo, palais du marbre. Disponibilité et conditions à confirmer auprès de DAFS Sarlu.",
+    bedrooms: 5,
+    bathrooms: 4,
+    livingArea: null,
+    landArea: 1800,
+    address: "Repère communiqué : Météo, palais du marbre · adresse exacte à confirmer",
+    images: [
+      kinshasaSeedListingImage("/property-media/ngaliema/ngaliema-tour-cover.jpg", "Villa à vendre à Ngaliema, image extraite de la vidéo de visite"),
+      { src: "/property-media/ngaliema/ngaliema-tour.mp4", alt: "Visite vidéo du bien à Ngaliema", caption: "Visite vidéo fournie pour le bien", mimeType: "video/mp4" },
+    ],
+  },
+];
 
 function propertyTarget(type: string): Page {
   if (type.includes("Parcelle") || type.includes("Terrain")) return "land-detail";
-  if (type.includes("Maison")) return "house-detail";
+  if (type.includes("Vente") || type.includes("Maison") || type.includes("Villa") || type.includes("Immeuble")) return "house-detail";
   if (type.includes("Longue")) return "long-detail";
   return "detail";
 }
@@ -300,26 +401,6 @@ const nav: { label: string; page: Page }[] = [
   { label: "Contact", page: "contact" },
 ];
 
-function createWhatsAppHref(value: string, phone: string, message?: string) {
-  let href: URL | null = null;
-  const candidate = value.trim();
-  if (candidate) {
-    try {
-      href = new URL(/^https?:\/\//i.test(candidate) ? candidate : `https://${candidate}`);
-      if (href.hostname === "wa.me" || href.hostname.endsWith(".wa.me")) href.protocol = "https:";
-    } catch {
-      href = null;
-    }
-  }
-  if (!href) {
-    const digits = phone.replace(/\D/g, "");
-    if (digits) href = new URL(`https://wa.me/${digits}`);
-  }
-  if (!href) return "";
-  if (message) href.searchParams.set("text", message);
-  return href.toString();
-}
-
 function Logo({ light = false, onClick }: { light?: boolean; onClick?: () => void }) {
   return (
     <button className="logo" aria-label="DAFS Sarlu, accueil" onClick={onClick}>
@@ -332,7 +413,7 @@ function Logo({ light = false, onClick }: { light?: boolean; onClick?: () => voi
   );
 }
 
-function Header({ page, go, whatsappHref }: { page: Page; go: (p: Page) => void; whatsappHref: string }) {
+function Header({ page, go }: { page: Page; go: (p: Page) => void }) {
   const [open, setOpen] = useState(false);
   return (
     <header className="site-header">
@@ -350,15 +431,9 @@ function Header({ page, go, whatsappHref }: { page: Page; go: (p: Page) => void;
             </button>
           ))}
         </nav>
-        {whatsappHref ? (
-          <a className="whatsapp-header" href={whatsappHref} target="_blank" rel="noreferrer">
-            <Icon name="whatsapp" size={18} /> WhatsApp
-          </a>
-        ) : (
-          <button className="whatsapp-header" onClick={() => go("contact")}>
-            Nous contacter
-          </button>
-        )}
+        <button className="contact-header" onClick={() => go("contact")}>
+          <Icon name="chat" size={17} /> Nous contacter
+        </button>
         <button className="mobile-menu" onClick={() => setOpen(!open)} aria-label={open ? "Fermer le menu" : "Ouvrir le menu"} aria-expanded={open}>
           <Icon name={open ? "close" : "menu"} />
         </button>
@@ -449,8 +524,7 @@ function PlanCard({ item, onSelect }: { item: ArchitecturalPlan; onSelect: (item
   );
 }
 
-function PropertyDetailPage({ property, go, whatsappHref }: { property: PropertyListing; go: (page: Page) => void; whatsappHref: string }) {
-  const inquiryHref = createWhatsAppHref(whatsappHref, "", `Bonjour DAFS Sarlu, je souhaite obtenir des informations sur le bien ${property.reference} — ${property.name}.`);
+function PropertyDetailPage({ property, go }: { property: PropertyListing; go: (page: Page) => void }) {
   const facts = [
     property.bedrooms !== null && property.bedrooms !== undefined ? [property.bedrooms, "Chambres"] : null,
     property.bathrooms !== null && property.bathrooms !== undefined ? [property.bathrooms, "Salles d’eau"] : null,
@@ -460,27 +534,26 @@ function PropertyDetailPage({ property, go, whatsappHref }: { property: Property
   return (
     <main className="property-detail container">
       <div className="detail-breadcrumb"><button onClick={() => go("home")}>Accueil</button><Icon name="chevron" size={15} /><span>{property.type}</span></div>
-      <div className="detail-heading"><div><span className="eyebrow">{property.reference} · {property.type}</span><h1>{property.name}</h1><p><Icon name="map" size={16} /> {property.city || property.address || "Localisation à confirmer"}</p></div><strong>{property.price}</strong></div>
+      <div className="detail-heading"><div><span className="eyebrow">{property.reference} · {property.type}</span><h1>{property.name}</h1><p><Icon name="map" size={16} /> {property.city || property.address || "Localisation à confirmer"}</p>{property.address && <p className="detail-address">Adresse ou repère : {property.address}</p>}</div><strong>{property.price}</strong></div>
       <div className="detail-gallery">
-        {property.images.length ? property.images.map((image, index) => <figure key={image.src} className={index === 0 ? "detail-gallery-main" : ""}><img src={image.src} alt={image.alt || property.name} /><figcaption>{image.caption}</figcaption></figure>) : <div className="detail-gallery-empty"><Icon name="building" size={36} /><span>Aucun visuel fourni pour ce bien</span></div>}
+        {property.images.length ? property.images.map((image, index) => <figure key={image.src} className={index === 0 ? "detail-gallery-main" : ""}>{image.mimeType?.startsWith("video/") ? <video controls preload="metadata" poster={property.image} src={image.src} aria-label={image.alt || property.name} /> : <img src={image.src} alt={image.alt || property.name} />}{image.caption && <figcaption>{image.caption}</figcaption>}</figure>) : <div className="detail-gallery-empty"><Icon name="building" size={36} /><span>Aucun visuel fourni pour ce bien</span></div>}
       </div>
       {facts.length > 0 && <div className="detail-facts">{facts.map(([value, label]) => <div key={label}><strong>{value}</strong><span>{label}</span></div>)}</div>}
       <div className="detail-content">
         <section><h2>À propos de ce bien</h2><p>{property.description || "La description détaillée de ce bien sera renseignée par DAFS Sarlu."}</p></section>
-        <aside><span className="eyebrow">Vous êtes intéressé ?</span><h2>{property.price}</h2><p>Contactez l’équipe pour obtenir plus d’informations ou organiser une visite.</p>{inquiryHref ? <a className="btn navy" href={inquiryHref} target="_blank" rel="noreferrer">Demander des informations <Icon name="arrow" /></a> : <button className="btn navy" onClick={() => go("contact")}>Contacter DAFS Sarlu <Icon name="arrow" /></button>}</aside>
+        <aside><span className="eyebrow">Vous êtes intéressé ?</span><h2>{property.price}</h2><p>Contactez l’équipe pour obtenir plus d’informations ou organiser une visite.</p><button className="btn navy" onClick={() => go("contact")}>Demander des informations <Icon name="arrow" /></button></aside>
       </div>
     </main>
   );
 }
 
-function PlanDetailPage({ plan, go, whatsappHref }: { plan: ArchitecturalPlan; go: (page: Page) => void; whatsappHref: string }) {
-  const inquiryHref = createWhatsAppHref(whatsappHref, "", `Bonjour DAFS Sarlu, je souhaite demander le plan complet ${plan.reference} — ${plan.name}.`);
+function PlanDetailPage({ plan, go }: { plan: ArchitecturalPlan; go: (page: Page) => void }) {
   return (
     <main className="plan-detail container">
       <div className="detail-breadcrumb"><button onClick={() => go("plans")}>Plans architecturaux</button><Icon name="chevron" size={15} /><span>{plan.reference}</span></div>
       <div className="plan-detail-grid">
         <div className="plan-detail-preview">{plan.image ? <img src={plan.image} alt={plan.name} /> : <div className="detail-gallery-empty"><Icon name="layers" size={36} /><span>Aucun aperçu fourni pour ce plan</span></div>}</div>
-        <section><span className="eyebrow">{plan.id} · {plan.category || "Plan architectural"}</span><h1>{plan.name}</h1><p className="plan-detail-meta">{plan.meta || "Caractéristiques à renseigner"}</p><p>{plan.description || "Contactez DAFS Sarlu pour obtenir des informations sur ce modèle."}</p>{inquiryHref ? <a className="btn navy" href={inquiryHref} target="_blank" rel="noreferrer">Demander le plan complet <Icon name="arrow" /></a> : <button className="btn navy" onClick={() => go("contact")}>Demander le plan complet <Icon name="arrow" /></button>}<small>Les fichiers originaux ne sont pas accessibles publiquement.</small></section>
+        <section><span className="eyebrow">{plan.id} · {plan.category || "Plan architectural"}</span><h1>{plan.name}</h1><p className="plan-detail-meta">{plan.meta || "Caractéristiques à renseigner"}</p><p>{plan.description || "Contactez DAFS Sarlu pour obtenir des informations sur ce modèle."}</p><button className="btn navy" onClick={() => go("contact")}>Demander le plan complet <Icon name="arrow" /></button><small>Les fichiers originaux ne sont pas accessibles publiquement.</small></section>
       </div>
     </main>
   );
@@ -574,7 +647,6 @@ function HomePage({
   go,
   onSelectProperty,
   settings,
-  whatsappHref,
   properties,
   plans,
   services,
@@ -586,7 +658,6 @@ function HomePage({
   go: (p: Page) => void;
   onSelectProperty: (property: PropertyListing) => void;
   settings: SiteSettings;
-  whatsappHref: string;
   properties: PropertyListing[];
   plans: ArchitecturalPlan[];
   services: PublicService[];
@@ -602,12 +673,12 @@ function HomePage({
   const budgetOptions = buildBudgetOptions(properties);
   const heroListing = properties.find((property) => property.image);
   const heroPlan = plans.find((plan) => plan.image);
-  const heroImage = heroListing?.image || heroPlan?.image || "/service-illustrations/architecture.svg";
+  const heroImage = heroListing?.image || heroPlan?.image || "/architecture/immeuble-3d-render.jpg";
   const heroAlt = heroListing?.name
     ? `Bien immobilier publié : ${heroListing.name}`
     : heroPlan?.name
       ? `Aperçu architectural : ${heroPlan.name}`
-      : "Illustration architecturale DAFS Sarlu";
+      : "Rendu 3D d’un immeuble partagé dans les visuels architecturaux DAFS Sarlu";
   return (
     <>
       <section className="hero">
@@ -661,7 +732,7 @@ function HomePage({
             </select>
           </label>
           <label>
-            <span>Localisation</span>
+            <span>Ville, commune ou quartier</span>
             <select value={city} onChange={(e) => setCity(e.target.value)}>
               <option value="">Toutes les villes</option>
               {cities.map((name) => <option key={name} value={name}>{name}</option>)}
@@ -687,14 +758,15 @@ function HomePage({
         />
         <div className="category-grid">
           {[
-            ["01", "Séjours", "Location courte durée", "Des logements proposés pour vos séjours.", "rentals" as Page],
-            ["02", "S’installer", "Location longue durée", "Des logements adaptés à votre quotidien.", "rentals" as Page],
-            ["03", "Acheter", "Maisons à vendre", "Consultez les maisons actuellement publiées.", "sales" as Page],
-            ["04", "Investir", "Parcelles à vendre", "Découvrez les parcelles actuellement publiées.", "sales" as Page],
-            ["05", "Concevoir", "Plans architecturaux", "Explorez les modèles et leurs aperçus autorisés.", "plans" as Page],
-            ["06", "Construire", "Estimation de construction", "Préparez une demande d’étude de votre projet.", "estimate" as Page],
-          ].map(([num, over, title, text, page]) => (
+            ["01", "Séjours", "Location courte durée", "Des logements proposés pour vos séjours.", "rentals" as Page, "bed" as IconName],
+            ["02", "S’installer", "Location longue durée", "Des logements adaptés à votre quotidien.", "rentals" as Page, "home" as IconName],
+            ["03", "Acheter", "Maisons à vendre", "Consultez les maisons actuellement publiées.", "sales" as Page, "building" as IconName],
+            ["04", "Investir", "Parcelles à vendre", "Découvrez les parcelles actuellement publiées.", "sales" as Page, "map" as IconName],
+            ["05", "Concevoir", "Plans architecturaux", "Explorez les modèles et leurs aperçus autorisés.", "plans" as Page, "layers" as IconName],
+            ["06", "Construire", "Estimation de construction", "Préparez une demande d’étude de votre projet.", "estimate" as Page, "ruler" as IconName],
+          ].map(([num, over, title, text, page, icon]) => (
             <button className="category-card" key={String(num)} onClick={() => go(page as Page)}>
+              <span className="category-icon"><Icon name={icon as IconName} size={24} /></span>
               <span className="category-num">{num}</span>
               <span className="category-over">{over}</span>
               <h3>{title}</h3>
@@ -769,7 +841,7 @@ function HomePage({
           </div>
           {loading ? (
             <PublishedContentEmpty title="Chargement des annonces…" description="" />
-          ) : loadError ? (
+          ) : loadError && properties.length === 0 ? (
             <PublishedContentEmpty
               title="Le catalogue est en cours de configuration"
               description="Les annonces publiées apparaîtront ici dès que la connexion sera disponible."
@@ -793,12 +865,12 @@ function HomePage({
       <section className="architecture-feature">
         <div className="arch-photo">
           <img
-            src={plans.find((plan) => plan.image)?.image || "/service-illustrations/architecture.svg"}
-            alt={plans.find((plan) => plan.image)?.name ? `Aperçu du plan ${plans.find((plan) => plan.image)?.name}` : "Illustration architecturale DAFS Sarlu"}
+            src={plans.find((plan) => plan.image)?.image || "/architecture/immeuble-3d-render.jpg"}
+            alt={plans.find((plan) => plan.image)?.name ? `Aperçu du plan ${plans.find((plan) => plan.image)?.name}` : "Rendu 3D d’un immeuble partagé dans les visuels architecturaux DAFS Sarlu"}
             loading="lazy"
           />
           <div className="arch-number">
-            {plans.length.toString().padStart(2, "0")}<span>modèles publiés</span>
+            {plans.length ? plans.length.toString().padStart(2, "0") : "3D"}<span>{plans.length ? "modèles publiés" : "aperçu architectural"}</span>
           </div>
         </div>
         <div className="arch-copy">
@@ -862,7 +934,7 @@ function HomePage({
           ))}
         </div>
       </section>
-      <Cta go={go} whatsappHref={whatsappHref} />
+      <Cta go={go} />
     </>
   );
 }
@@ -1127,7 +1199,7 @@ function CataloguePage({
               ))}
             </div>
             <div className="filter-group">
-              <label>Localisation</label>
+              <label>Ville, commune ou quartier</label>
               <select value={city} onChange={(event) => { setCity(event.target.value); setPageNumber(1); }}>
                 <option value="">Toutes les villes</option>
                 {cities.map((name) => <option key={name} value={name}>{name}</option>)}
@@ -1171,7 +1243,7 @@ function CataloguePage({
             </div>
             {loading ? (
               <PublishedContentEmpty title="Chargement des annonces…" description="" />
-            ) : loadError ? (
+            ) : loadError && properties.length === 0 ? (
               <PublishedContentEmpty
                 title="Le catalogue est en cours de configuration"
                 description="Les annonces apparaîtront ici dès que la connexion sera disponible."
@@ -1379,7 +1451,6 @@ function ContactPage({ settings }: { settings: SiteSettings }) {
           {settings.email && <a href={`mailto:${settings.email}`}>{settings.email}</a>}
           {settings.phone && <a href={`tel:${settings.phone.replace(/[^+\d]/g, "")}`}>{settings.phone}</a>}
           {settings.address && <p>{settings.address}</p>}
-          {settings.whatsapp && <a href={settings.whatsapp} target="_blank" rel="noreferrer">Écrire sur WhatsApp</a>}
         </aside>
         <form
           className="contact-form"
@@ -1505,7 +1576,7 @@ function SystemPage({ go }: { go: (p: Page) => void }) {
   );
 }
 
-function Cta({ go, whatsappHref }: { go: (p: Page) => void; whatsappHref: string }) {
+function Cta({ go }: { go: (p: Page) => void }) {
   return (
     <section className="cta">
       <div className="container">
@@ -1514,22 +1585,15 @@ function Cta({ go, whatsappHref }: { go: (p: Page) => void; whatsappHref: string
           <h2>Parlons-en, simplement.</h2>
           <p>Présentez votre besoin en immobilier, en architecture, en déménagement, en aménagement ou en nettoyage.</p>
         </div>
-        {whatsappHref ? (
-          <a className="btn whatsapp" href={createWhatsAppHref(whatsappHref, "", "Bonjour DAFS Sarlu, je souhaite échanger au sujet de mon projet.")} target="_blank" rel="noreferrer">
-            <Icon name="whatsapp" /> Nous contacter sur WhatsApp
-          </a>
-        ) : (
-          <button className="btn whatsapp" onClick={() => go("contact")}>
-            <Icon name="whatsapp" /> Nous contacter
-          </button>
-        )}
+        <button className="btn navy" onClick={() => go("contact")}>
+          <Icon name="chat" /> Nous contacter
+        </button>
       </div>
     </section>
   );
 }
 
 function Footer({ go, settings }: { go: (p: Page) => void; settings: SiteSettings }) {
-  const whatsappHref = createWhatsAppHref(settings.whatsapp, settings.phone);
   return (
     <footer>
       <div className="container footer-grid">
@@ -1554,9 +1618,8 @@ function Footer({ go, settings }: { go: (p: Page) => void; settings: SiteSetting
         <div>
           <h4>Nous contacter</h4>
           {settings.email && <a href={`mailto:${settings.email}`}>{settings.email}</a>}
-          {settings.phone && <p>{settings.phone}</p>}
+          {settings.phone && <a href={`tel:${settings.phone.replace(/[^+\d]/g, "")}`}>{settings.phone}</a>}
           {settings.address && <p>{settings.address}</p>}
-          {whatsappHref && <a href={whatsappHref} target="_blank" rel="noreferrer">Écrire sur WhatsApp</a>}
         </div>
       </div>
       <div className="container footer-bottom">
@@ -1605,7 +1668,7 @@ export default function App({
       const { data, error } = await client
         .from("properties")
         .select(
-          "id, reference, title, description, short_description, address, operation_type, city, municipality, land_area_m2, living_area_m2, bedrooms, bathrooms, price_amount, currency, pricing_period, property_images(storage_path, alt_text, caption, is_primary, sort_order), property_categories(name)",
+          "id, reference, title, description, short_description, address, operation_type, city, municipality, neighborhood, land_area_m2, living_area_m2, bedrooms, bathrooms, price_amount, currency, pricing_period, is_negotiable, property_images(storage_path, alt_text, caption, is_primary, sort_order), property_categories(name)",
         )
         .eq("publication_status", "published")
         .is("archived_at", null)
@@ -1623,9 +1686,12 @@ export default function App({
           (a, b) => Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order,
         );
         const images = gallery.map((image) => ({
-          src: client.storage.from("property-images").getPublicUrl(image.storage_path).data.publicUrl,
+          src: image.storage_path.startsWith("local:")
+            ? image.storage_path.slice("local:".length)
+            : client.storage.from("property-images").getPublicUrl(image.storage_path).data.publicUrl,
           alt: image.alt_text ?? row.title,
           caption: image.caption ?? "",
+          mimeType: image.storage_path.toLowerCase().endsWith(".mp4") ? "video/mp4" : "image/jpeg",
         }));
         const image = images[0]?.src ?? "";
         const operation =
@@ -1645,7 +1711,7 @@ export default function App({
         const areas = [row.living_area_m2 && `${row.living_area_m2} m²`, row.land_area_m2 && `Terrain ${row.land_area_m2} m²`].filter(Boolean);
         const rooms = [row.bedrooms && `${row.bedrooms} chambres`, row.bathrooms && `${row.bathrooms} salles d’eau`].filter(Boolean);
         const meta = [...areas, ...rooms].join(" · ") || "Détails disponibles sur demande";
-        const location = [row.city, row.municipality].filter(Boolean).join(", ");
+        const location = [row.city, row.municipality, row.neighborhood].filter(Boolean).join(", ");
         const amount = row.price_amount && row.currency
           ? new Intl.NumberFormat("fr-FR", { style: "currency", currency: row.currency }).format(row.price_amount)
           : "Prix sur demande";
@@ -1657,8 +1723,9 @@ export default function App({
           city: location,
           type,
           meta,
-          price: `${amount}${period}`,
+        price: `${amount}${period}${row.is_negotiable ? " · à discuter" : ""}`,
           priceAmount: row.price_amount,
+        isNegotiable: row.is_negotiable,
           currency: row.currency,
           pricingPeriod: row.pricing_period,
           image,
@@ -1804,28 +1871,27 @@ export default function App({
   const selectedProperty = properties.find((property) => property.id === searchParams.get("id"));
   const selectedPlan = plans.find((plan) => plan.id === searchParams.get("id"));
   const selectedService = services.find((service) => service.slug === decodeURIComponent(pathname.split("/").filter(Boolean).at(-1) ?? ""));
-  const whatsappHref = createWhatsAppHref(initialSettings.whatsapp, initialSettings.phone);
   const content: Record<Page, React.ReactNode> = {
-    home: <HomePage go={go} onSelectProperty={selectProperty} settings={initialSettings} whatsappHref={whatsappHref} properties={properties} plans={plans} services={services} onSelectService={selectService} onQuickSearch={quickSearch} loading={propertiesLoading} loadError={propertiesLoadError} />,
+    home: <HomePage go={go} onSelectProperty={selectProperty} settings={initialSettings} properties={properties} plans={plans} services={services} onSelectService={selectService} onQuickSearch={quickSearch} loading={propertiesLoading} loadError={propertiesLoadError} />,
     rentals: <CataloguePage mode="rentals" go={go} onSelectProperty={selectProperty} properties={properties} loading={propertiesLoading} loadError={propertiesLoadError} />,
     sales: <CataloguePage mode="sales" go={go} onSelectProperty={selectProperty} properties={properties} loading={propertiesLoading} loadError={propertiesLoadError} />,
     plans: <PlansPage go={go} plans={plans} onSelectPlan={selectPlan} />,
     services: <ServicesDirectory services={services} onSelect={selectService} />,
     "service-detail": selectedService ? <PublicServicePage service={selectedService} go={go} /> : <ServicesDirectory services={services} onSelect={selectService} />,
     detail: (
-      selectedProperty ? <PropertyDetailPage property={selectedProperty} go={go} whatsappHref={whatsappHref} /> : <EmptyPublicPage title="Fiche logement" description="Cette fiche sera disponible après la publication d’un logement." go={go} />
+      selectedProperty ? <PropertyDetailPage property={selectedProperty} go={go} /> : <EmptyPublicPage title="Fiche logement" description="Cette fiche sera disponible après la publication d’un logement." go={go} />
     ),
     "long-detail": (
-      selectedProperty ? <PropertyDetailPage property={selectedProperty} go={go} whatsappHref={whatsappHref} /> : <EmptyPublicPage title="Fiche location" description="Cette fiche sera disponible après la publication d’un logement." go={go} />
+      selectedProperty ? <PropertyDetailPage property={selectedProperty} go={go} /> : <EmptyPublicPage title="Fiche location" description="Cette fiche sera disponible après la publication d’un logement." go={go} />
     ),
     "house-detail": (
-      selectedProperty ? <PropertyDetailPage property={selectedProperty} go={go} whatsappHref={whatsappHref} /> : <EmptyPublicPage title="Fiche maison" description="Cette fiche sera disponible après la publication d’un bien." go={go} />
+      selectedProperty ? <PropertyDetailPage property={selectedProperty} go={go} /> : <EmptyPublicPage title="Fiche maison" description="Cette fiche sera disponible après la publication d’un bien." go={go} />
     ),
     "land-detail": (
-      selectedProperty ? <PropertyDetailPage property={selectedProperty} go={go} whatsappHref={whatsappHref} /> : <EmptyPublicPage title="Fiche parcelle" description="Cette fiche sera disponible après la publication d’un bien." go={go} />
+      selectedProperty ? <PropertyDetailPage property={selectedProperty} go={go} /> : <EmptyPublicPage title="Fiche parcelle" description="Cette fiche sera disponible après la publication d’un bien." go={go} />
     ),
     "plan-detail": (
-      selectedPlan ? <PlanDetailPage plan={selectedPlan} go={go} whatsappHref={whatsappHref} /> : <EmptyPublicPage title="Fiche plan architectural" description="Cette fiche sera disponible après la publication d’un plan." go={go} />
+      selectedPlan ? <PlanDetailPage plan={selectedPlan} go={go} /> : <EmptyPublicPage title="Fiche plan architectural" description="Cette fiche sera disponible après la publication d’un plan." go={go} />
     ),
     estimate: <EstimatePage onContact={() => router.push(`${pagePaths.contact}?subject=${encodeURIComponent("Estimation de construction")}`)} />,
     "estimate-result": (
@@ -1839,14 +1905,10 @@ export default function App({
   };
   return (
     <div className="app">
-      <Header page={page} go={go} whatsappHref={whatsappHref} />
+      <Header page={page} go={go} />
       {content[page]}
       <Footer go={go} settings={initialSettings} />
-      {page !== "contact" && whatsappHref && (
-        <a className="float-wa" href={whatsappHref} target="_blank" rel="noreferrer" aria-label="Contacter DAFS Sarlu sur WhatsApp">
-          <Icon name="whatsapp" />
-        </a>
-      )}
+      {page !== "contact" && <button className="float-contact" onClick={() => go("contact")} aria-label="Contacter DAFS Sarlu"><Icon name="chat" /></button>}
     </div>
   );
 }

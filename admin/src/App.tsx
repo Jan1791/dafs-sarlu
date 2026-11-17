@@ -108,12 +108,16 @@ type PropertyRecord = {
   description?: string;
   kind: string;
   location: string;
+  city?: string;
+  municipality?: string;
+  neighborhood?: string;
   address?: string;
   bedrooms?: number | null;
   bathrooms?: number | null;
   livingArea?: number | null;
   landArea?: number | null;
   price: string;
+  isNegotiable?: boolean;
   status: string;
   tone: "success" | "warning" | "neutral" | "danger";
   color: string;
@@ -129,8 +133,10 @@ type PropertyDraft = {
   operation: string;
   city: string;
   municipality: string;
+  neighborhood: string;
   address: string;
   price: string;
+  isNegotiable: boolean;
   currency: string;
   bedrooms: string;
   bathrooms: string;
@@ -139,6 +145,13 @@ type PropertyDraft = {
   image: File | null;
   removeImage: boolean;
 };
+
+const kinshasaCommunes = [
+  "Bandalungwa", "Barumbu", "Bumbu", "Gombe", "Kalamu", "Kasa-Vubu",
+  "Kimbanseke", "Kinshasa", "Kintambo", "Kisenso", "Lemba", "Limete",
+  "Lingwala", "Makala", "Maluku", "Masina", "Matete", "Mont-Ngafula",
+  "N'djili", "Ngaba", "Ngaliema", "Ngiri-Ngiri", "N'sele", "Selembao",
+];
 
 type PlanRecord = {
   id: string;
@@ -1268,10 +1281,12 @@ function PropertyModal({
       description: property?.description ?? "",
       category,
       operation,
-      city,
-      municipality,
+      city: property?.city ?? (city === "Kinshasa" ? city : city || "Kinshasa"),
+      municipality: property?.municipality ?? municipality,
+      neighborhood: property?.neighborhood ?? "",
       address: property?.address ?? "",
       price: amount,
+      isNegotiable: property?.isNegotiable ?? false,
       currency,
       bedrooms: property?.bedrooms?.toString() ?? "",
       bathrooms: property?.bathrooms?.toString() ?? "",
@@ -1401,14 +1416,20 @@ function PropertyModal({
               <label>
                 <span>Commune *</span>
                 <input
+                  list="kinshasa-communes"
                   value={draft.municipality}
                   onChange={(event) => updateDraft("municipality", event.target.value)}
-                  placeholder="Ex. Ngaliema"
+                  placeholder="Choisir ou saisir une commune"
                 />
+                <datalist id="kinshasa-communes">{kinshasaCommunes.map((commune) => <option key={commune} value={commune} />)}</datalist>
+              </label>
+              <label>
+                <span>Quartier</span>
+                <input value={draft.neighborhood} onChange={(event) => updateDraft("neighborhood", event.target.value)} placeholder="Ex. Bandal Molard" />
               </label>
               <label className="full-field">
-                <span>Adresse</span>
-                <input value={draft.address} onChange={(event) => updateDraft("address", event.target.value)} placeholder="Avenue, numéro et repère" />
+                <span>Adresse complète ou repère</span>
+                <textarea rows={2} value={draft.address} onChange={(event) => updateDraft("address", event.target.value)} placeholder="Avenue, numéro, référence ou repère connu. Le champ peut rester vide si l’information doit être complétée." />
               </label>
               <label><span>Surface habitable (m²)</span><input type="number" min="0" step="0.01" value={draft.livingArea} onChange={(event) => updateDraft("livingArea", event.target.value)} /></label>
               <label><span>Surface du terrain (m²)</span><input type="number" min="0" step="0.01" value={draft.landArea} onChange={(event) => updateDraft("landArea", event.target.value)} /></label>
@@ -1423,6 +1444,10 @@ function PropertyModal({
                   onChange={(event) => updateDraft("price", event.target.value)}
                   placeholder="0"
                 />
+              </label>
+              <label className="checkbox-field">
+                <input type="checkbox" checked={draft.isNegotiable} onChange={(event) => updateDraft("isNegotiable", event.target.checked)} />
+                <span>Prix à discuter</span>
               </label>
               <label>
                 <span>Devise</span>
@@ -1488,8 +1513,10 @@ function PropertyModal({
                     operation: draft.operation,
                     city: draft.city.trim(),
                     municipality: draft.municipality.trim(),
+                    neighborhood: draft.neighborhood.trim(),
                     address: draft.address.trim(),
                     price: draft.price,
+                    isNegotiable: draft.isNegotiable,
                     currency: draft.currency,
                     bedrooms: draft.bedrooms,
                     bathrooms: draft.bathrooms,
@@ -1696,7 +1723,7 @@ function App() {
     setPropertiesError("");
     const { data, error } = await client
       .from("properties")
-      .select("id, reference, title, short_description, description, operation_type, publication_status, city, municipality, address, bedrooms, bathrooms, living_area_m2, land_area_m2, price_amount, currency, pricing_period, property_categories(name), property_images(storage_path, is_primary, sort_order)")
+      .select("id, reference, title, short_description, description, operation_type, publication_status, city, municipality, neighborhood, address, bedrooms, bathrooms, living_area_m2, land_area_m2, price_amount, currency, pricing_period, is_negotiable, property_categories(name), property_images(storage_path, is_primary, sort_order)")
       .is("archived_at", null)
       .order("created_at", { ascending: false });
     if (error) {
@@ -1716,7 +1743,7 @@ function App() {
         : row.publication_status === "pending_review" ? "À valider"
           : row.publication_status === "archived" ? "Archivée" : "Brouillon";
       const amount = row.price_amount && row.currency
-        ? `${new Intl.NumberFormat("fr-FR", { style: "currency", currency: row.currency }).format(row.price_amount)}${row.pricing_period === "month" ? " / mois" : row.pricing_period === "night" ? " / nuit" : ""}`
+        ? `${new Intl.NumberFormat("fr-FR", { style: "currency", currency: row.currency }).format(row.price_amount)}${row.pricing_period === "month" ? " / mois" : row.pricing_period === "night" ? " / nuit" : ""}${row.is_negotiable ? " · à discuter" : ""}`
         : "Prix sur demande";
       return {
         id: row.id,
@@ -1725,17 +1752,21 @@ function App() {
         shortDescription: row.short_description ?? "",
         description: row.description ?? "",
         kind: `${row.property_categories?.name ?? "Bien immobilier"} · ${operation}`,
-        location: [row.city, row.municipality].filter(Boolean).join(", ") || "Localisation à renseigner",
+        location: [row.city, row.municipality, row.neighborhood].filter(Boolean).join(", ") || "Localisation à renseigner",
+        city: row.city ?? "",
+        municipality: row.municipality ?? "",
+        neighborhood: row.neighborhood ?? "",
         address: row.address ?? "",
         bedrooms: row.bedrooms,
         bathrooms: row.bathrooms,
         livingArea: row.living_area_m2,
         landArea: row.land_area_m2,
         price: amount,
+        isNegotiable: row.is_negotiable,
         status,
         tone: status === "Publiée" ? "success" : status === "À valider" ? "warning" : "neutral",
         color: "image-one",
-        image: imagePath ? client.storage.from("property-images").getPublicUrl(imagePath).data.publicUrl : undefined,
+        image: imagePath ? imagePath.startsWith("local:") ? imagePath.slice("local:".length) : client.storage.from("property-images").getPublicUrl(imagePath).data.publicUrl : undefined,
         imagePath,
       };
     });
@@ -1988,6 +2019,7 @@ function App() {
       operation_type: operationType,
       city: draft.city.trim() || null,
       municipality: draft.municipality.trim() || null,
+      neighborhood: draft.neighborhood.trim() || null,
       address: draft.address.trim() || null,
       bedrooms: draft.bedrooms === "" ? null : Number(draft.bedrooms),
       bathrooms: draft.bathrooms === "" ? null : Number(draft.bathrooms),
@@ -1995,6 +2027,7 @@ function App() {
       land_area_m2: draft.landArea === "" ? null : Number(draft.landArea),
       price_amount: draft.price ? Number(draft.price) : null,
       currency: draft.price ? draft.currency || null : null,
+      is_negotiable: draft.isNegotiable,
       pricing_period: operationType === "short_rental" ? "night" : operationType === "long_rental" ? "month" : "fixed",
       updated_by: session.user.id,
     };
@@ -2038,13 +2071,15 @@ function App() {
       }
       if (currentPrimary) {
         await supabase.from("property_images").delete().eq("id", currentPrimary.id);
-        await supabase.storage.from("property-images").remove([currentPrimary.storage_path]);
+        if (!currentPrimary.storage_path.startsWith("local:")) await supabase.storage.from("property-images").remove([currentPrimary.storage_path]);
       }
     } else if (draft.removeImage && currentPrimary) {
       const { error: removeRowError } = await supabase.from("property_images").delete().eq("id", currentPrimary.id);
       if (removeRowError) throw new Error("La photo principale n’a pas pu être supprimée.");
-      const { error: removeFileError } = await supabase.storage.from("property-images").remove([currentPrimary.storage_path]);
-      if (removeFileError) throw new Error("La photo n’est plus liée à l’annonce mais le fichier est resté dans Storage.");
+      if (!currentPrimary.storage_path.startsWith("local:")) {
+        const { error: removeFileError } = await supabase.storage.from("property-images").remove([currentPrimary.storage_path]);
+        if (removeFileError) throw new Error("La photo n’est plus liée à l’annonce mais le fichier est resté dans Storage.");
+      }
     }
     await loadProperties();
   };
@@ -2056,8 +2091,9 @@ function App() {
     if (readError) { setPropertiesError("Les photos de cette annonce n’ont pas pu être identifiées."); return; }
     const { error: deleteError } = await supabase.from("properties").delete().eq("id", property.id);
     if (deleteError) { setPropertiesError("L’annonce n’a pas pu être supprimée."); return; }
-    if (images?.length) {
-      const { error: storageError } = await supabase.storage.from("property-images").remove(images.map((image) => image.storage_path));
+    const uploadedImages = images?.filter((image) => !image.storage_path.startsWith("local:")) ?? [];
+    if (uploadedImages.length) {
+      const { error: storageError } = await supabase.storage.from("property-images").remove(uploadedImages.map((image) => image.storage_path));
       if (storageError) setPropertiesError("L’annonce est supprimée, mais certaines photos sont restées dans Storage.");
     }
     await loadProperties();

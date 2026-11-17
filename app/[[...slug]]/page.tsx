@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import App, { type ArchitecturalPlan, type PropertyListing, type PublicService, type ServiceMedia, type SiteSettings } from "../../src/App";
+import App, { starterProperties, type ArchitecturalPlan, type PropertyListing, type PublicService, type ServiceMedia, type SiteSettings } from "../../src/App";
 
 export const dynamic = "force-dynamic";
 
@@ -58,7 +58,7 @@ async function loadPublishedContent(): Promise<{
   };
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-  if (!url || !key) return { properties: [], plans: [], settings: defaultSettings, services: fallbackServices, error: true };
+  if (!url || !key) return { properties: starterProperties, plans: [], settings: defaultSettings, services: fallbackServices, error: true };
 
   const client = createClient(url, key, {
     auth: { autoRefreshToken: false, persistSession: false },
@@ -73,7 +73,7 @@ async function loadPublishedContent(): Promise<{
       client
         .from("properties")
         .select(
-          "id, reference, title, description, short_description, address, operation_type, city, municipality, land_area_m2, living_area_m2, bedrooms, bathrooms, price_amount, currency, pricing_period, property_images(storage_path, alt_text, caption, is_primary, sort_order), property_categories(name)",
+          "id, reference, title, description, short_description, address, operation_type, city, municipality, neighborhood, land_area_m2, living_area_m2, bedrooms, bathrooms, price_amount, currency, pricing_period, is_negotiable, property_images(storage_path, alt_text, caption, is_primary, sort_order), property_categories(name)",
         )
         .eq("publication_status", "published")
         .is("archived_at", null)
@@ -104,7 +104,7 @@ async function loadPublishedContent(): Promise<{
     ]);
 
     if (propertyResult.error || planResult.error || settingsResult.error) {
-      return { properties: [], plans: [], settings: defaultSettings, services: fallbackServices, error: true };
+      return { properties: starterProperties, plans: [], settings: defaultSettings, services: fallbackServices, error: true };
     }
 
     const properties = (propertyResult.data ?? []).map((row: any) => {
@@ -112,9 +112,12 @@ async function loadPublishedContent(): Promise<{
         (a, b) => Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order,
       );
       const images = gallery.map((image: any) => ({
-        src: client.storage.from("property-images").getPublicUrl(image.storage_path).data.publicUrl,
+        src: String(image.storage_path).startsWith("local:")
+          ? String(image.storage_path).slice("local:".length)
+          : client.storage.from("property-images").getPublicUrl(image.storage_path).data.publicUrl,
         alt: image.alt_text ?? row.title,
         caption: image.caption ?? "",
+        mimeType: String(image.storage_path).toLowerCase().endsWith(".mp4") ? "video/mp4" : "image/jpeg",
       }));
       const image = images[0]?.src ?? "";
       const operation =
@@ -149,11 +152,12 @@ async function loadPublishedContent(): Promise<{
         id: row.id,
         reference: row.reference,
         name: row.title,
-        city: [row.city, row.municipality].filter(Boolean).join(", "),
+        city: [row.city, row.municipality, row.neighborhood].filter(Boolean).join(", "),
         type,
         meta: [...areas, ...rooms].join(" · ") || "Détails disponibles sur demande",
-        price: `${amount}${period}`,
+        price: `${amount}${period}${row.is_negotiable ? " · à discuter" : ""}`,
         priceAmount: row.price_amount,
+        isNegotiable: row.is_negotiable,
         currency: row.currency,
         pricingPeriod: row.pricing_period,
         image,
@@ -231,7 +235,7 @@ async function loadPublishedContent(): Promise<{
     }));
     return { properties, plans, settings, services, error: false };
   } catch {
-    return { properties: [], plans: [], settings: defaultSettings, services: fallbackServices, error: true };
+    return { properties: starterProperties, plans: [], settings: defaultSettings, services: fallbackServices, error: true };
   }
 }
 
