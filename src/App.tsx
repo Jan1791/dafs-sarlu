@@ -232,6 +232,15 @@ function propertyTarget(type: string): Page {
 export type ArchitecturalPlan = { id: string; reference: string; name: string; meta: string; image: string; description: string; category: string };
 export type ServiceMedia = { id: string; title: string; description: string; url: string; alt: string; mimeType: string };
 export type PublicService = { id: string; slug: string; title: string; eyebrow: string; summary: string; body: string; features: string[]; media: ServiceMedia[] };
+
+function serviceIllustrationPath(slug: string) {
+  const normalized = slug.toLowerCase();
+  if (normalized.includes("clean") || normalized.includes("nettoyage")) {
+    return "/service-illustrations/cleaner.svg";
+  }
+  return "/service-illustrations/moving.svg";
+}
+
 export type SiteSettings = {
   company_name: string;
   legal_name: string;
@@ -430,13 +439,47 @@ function ServicesDirectory({ services, onSelect }: { services: PublicService[]; 
   return <>
     <PageHero eyebrow="Nos services" title="Des solutions pour votre quotidien" text="Découvrez les services proposés par DAFS Sarlu." />
     <section className="section container service-public-list">
-      {services.length ? <div className="service-public-grid">{services.map((service, index) => {
-        const cover = service.media.find((asset) => asset.mimeType.startsWith("image/"));
-        return <button className="service-public-card" key={service.id} onClick={() => onSelect(service)}>
-          <div className="service-public-image">{cover ? <img src={cover.url} alt={cover.alt || cover.title} loading="lazy" /> : <span>{String(index + 1).padStart(2, "0")}</span>}</div>
-          <div className="service-public-copy"><span className="eyebrow">{service.eyebrow || "DAFS Sarlu"}</span><h2>{service.title}</h2><p>{service.summary}</p><span className="text-link">Découvrir le service <Icon name="arrow" size={16} /></span></div>
-        </button>;
-      })}</div> : <PublishedContentEmpty title="Nos services seront bientôt présentés" description="Les pages de services apparaîtront dès leur publication depuis l’espace d’administration." />}
+      {services.length ? (
+        <div className="service-public-grid">
+          {services.map((service) => {
+            const cover = service.media.find((asset) => asset.mimeType.startsWith("image/"));
+            return (
+              <button
+                className="service-public-card"
+                key={service.id}
+                onClick={() => onSelect(service)}
+                aria-label={`Voir le détail du service ${service.title}`}
+              >
+                <div className="service-public-image">
+                  {cover ? (
+                    <img src={cover.url} alt={cover.alt || cover.title} loading="lazy" />
+                  ) : (
+                    <img
+                      className="service-svg"
+                      src={serviceIllustrationPath(service.slug)}
+                      alt={`Illustration du service ${service.title}`}
+                      loading="lazy"
+                    />
+                  )}
+                </div>
+                <div className="service-public-copy">
+                  <span className="eyebrow">{service.eyebrow || "DAFS Sarlu"}</span>
+                  <h2>{service.title}</h2>
+                  <p>{service.summary}</p>
+                  <span className="text-link">
+                    Découvrir le service <Icon name="arrow" size={16} />
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <PublishedContentEmpty
+          title="Nos services seront bientôt présentés"
+          description="Les pages de services apparaîtront dès leur publication depuis l’espace d’administration."
+        />
+      )}
     </section>
   </>;
 }
@@ -450,11 +493,28 @@ function PublicServicePage({ service, go }: { service: PublicService; go: (page:
         {service.features.length > 0 && <section className="public-service-features"><span className="eyebrow">Notre accompagnement</span><ul>{service.features.map((feature) => <li key={feature}><Icon name="check" size={18} />{feature}</li>)}</ul></section>}
         <button className="btn navy" onClick={() => go("contact")}>Demander ce service <Icon name="arrow" /></button>
       </div>
-      {!!service.media.length && <section className="public-service-media" aria-label={`Médias : ${service.title}`}>
-        {service.media.map((asset) => asset.mimeType.startsWith("video/")
-          ? <figure key={asset.id}><video controls preload="metadata" src={asset.url} aria-label={asset.title} /><figcaption>{asset.description || asset.title}</figcaption></figure>
-          : <figure key={asset.id}><img src={asset.url} alt={asset.alt || asset.title} loading="lazy" /><figcaption>{asset.description || asset.title}</figcaption></figure>)}
-      </section>}
+      {service.media.length > 0 ? (
+        <section className="public-service-media" aria-label={`Médias : ${service.title}`}>
+          {service.media.map((asset) =>
+            asset.mimeType.startsWith("video/") ? (
+              <figure key={asset.id}>
+                <video controls preload="metadata" src={asset.url} aria-label={asset.title} />
+                <figcaption>{asset.description || asset.title}</figcaption>
+              </figure>
+            ) : (
+              <figure key={asset.id}>
+                <img src={asset.url} alt={asset.alt || asset.title} loading="lazy" />
+                <figcaption>{asset.description || asset.title}</figcaption>
+              </figure>
+            ),
+          )}
+        </section>
+      ) : (
+        <figure className="public-service-artwork">
+          <img src={serviceIllustrationPath(service.slug)} alt={`Illustration du service ${service.title}`} />
+          <figcaption>Illustration du service · {service.title}</figcaption>
+        </figure>
+      )}
     </main>
   </>;
 }
@@ -589,7 +649,59 @@ function HomePage({
           ))}
         </div>
       </section>
-      {services.length > 0 && <section className="section service-home-section"><div className="container"><div className="split-heading"><SectionHead eyebrow="Au-delà de l’immobilier" title="Des espaces prêts à vivre" text="Découvrez nos équipes et nos services pour préparer, aménager et entretenir vos espaces." /><button className="text-link" onClick={() => go("services")}>Tous nos services <Icon name="arrow" size={17} /></button></div><div className="service-home-grid">{services.slice(0, 2).map((service, index) => { const cover = service.media.find((asset) => asset.mimeType.startsWith("image/")); return <button key={service.id} className="service-home-card" onClick={() => onSelectService(service)} aria-label={`Découvrir le service ${service.title}`}><span className={`service-home-visual ${cover ? "has-image" : "is-illustration"}`}>{cover ? <img src={cover.url} alt={cover.alt || cover.title} loading="lazy" /> : <span className="service-home-placeholder" aria-hidden="true"><span className="service-art-orbit" /><Icon name="sparkle" size={42} /></span>}<span className="service-home-visual-label">{String(index + 1).padStart(2, "0")} <span>·</span> {service.eyebrow || "DAFS Sarlu"}</span><span className="service-home-visual-title">{service.title}</span></span><span className="service-home-copy"><em>{service.summary}</em><span className="service-home-link">Découvrir le service <Icon name="arrow" size={16} /></span></span><span className="service-home-arrow"><Icon name="arrow" /></span></button>; })}</div></div></section>}
+      {services.length > 0 && (
+        <section className="section service-home-section">
+          <div className="container">
+            <div className="split-heading">
+              <SectionHead
+                eyebrow="Au-delà de l’immobilier"
+                title="Des espaces prêts à vivre"
+                text="Découvrez nos équipes et nos services pour préparer, aménager et entretenir vos espaces."
+              />
+              <button className="text-link" onClick={() => go("services")}>
+                Tous nos services <Icon name="arrow" size={17} />
+              </button>
+            </div>
+            <div className="service-home-grid">
+              {services.slice(0, 2).map((service, index) => {
+                const cover = service.media.find((asset) => asset.mimeType.startsWith("image/"));
+                return (
+                  <button
+                    key={service.id}
+                    className="service-home-card"
+                    onClick={() => onSelectService(service)}
+                    aria-label={`Découvrir le service ${service.title}`}
+                  >
+                    <span className={`service-home-visual ${cover ? "has-image" : "is-illustration"}`}>
+                      {cover ? (
+                        <img src={cover.url} alt={cover.alt || cover.title} loading="lazy" />
+                      ) : (
+                        <img
+                          className="service-home-illustration"
+                          src={serviceIllustrationPath(service.slug)}
+                          alt={`Illustration du service ${service.title}`}
+                          loading="lazy"
+                        />
+                      )}
+                      <span className="service-home-visual-label">
+                        {String(index + 1).padStart(2, "0")} <span>·</span> {service.eyebrow || "DAFS Sarlu"}
+                      </span>
+                      <span className="service-home-visual-title">{service.title}</span>
+                    </span>
+                    <span className="service-home-copy">
+                      <em>{service.summary}</em>
+                      <span className="service-home-link">
+                        Découvrir le service <Icon name="arrow" size={16} />
+                      </span>
+                    </span>
+                    <span className="service-home-arrow"><Icon name="arrow" /></span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
       <section className="section soft-bg">
         <div className="container">
           <div className="split-heading">
