@@ -403,12 +403,8 @@ const nav: { label: string; page: Page }[] = [
 
 function Logo({ light = false, onClick }: { light?: boolean; onClick?: () => void }) {
   return (
-    <button className="logo" aria-label="DAFS Sarlu, accueil" onClick={onClick}>
-      <span className={light ? "logo-mark light" : "logo-mark"}>D</span>
-      <span>
-        <b className={light ? "text-white" : ""}>DAFS</b>
-        <small className={light ? "text-white/60" : ""}>Sarlu</small>
-      </span>
+    <button className={`logo${light ? " logo-footer" : ""}`} aria-label="DAFS Sarlu, accueil" onClick={onClick}>
+      <img className="logo-image" src="/brand/dafs-sarlu-logo.jpeg" alt="DAFS Sarlu" />
     </button>
   );
 }

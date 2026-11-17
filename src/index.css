@@ -80,12 +80,15 @@ textarea:focus-visible {
 .logo {
   display: flex;
   align-items: center;
-  gap: 11px;
+  justify-content: flex-start;
+  padding: 0;
   background: none;
   border: 0;
   text-align: left;
   color: #14263d;
 }
+.logo-image { display: block; width: 116px; height: 68px; object-fit: contain; }
+.logo-footer .logo-image { width: 176px; height: 104px; padding: 5px; border-radius: 7px; background: #fff; }
 .logo-mark {
   width: 36px;
   height: 42px;
