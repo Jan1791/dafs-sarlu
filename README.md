@@ -1,6 +1,6 @@
-# DAFS Services
+# DAFS Sarlu
 
-Plateforme web DAFS Services réalisée avec Next.js, React, TypeScript, Tailwind CSS v4 et Supabase.
+Plateforme web DAFS Sarlu réalisée avec Next.js, React, TypeScript, Tailwind CSS v4 et Supabase.
 
 ## Applications
 

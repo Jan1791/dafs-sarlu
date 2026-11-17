@@ -6,7 +6,7 @@ create table if not exists public.site_settings (
 );
 
 insert into public.site_settings (id, settings)
-values ('global', jsonb_build_object('company_name', 'DAFS SERVICES'))
+values ('global', jsonb_build_object('company_name', 'DAFS Sarlu'))
 on conflict (id) do nothing;
 
 alter table public.site_settings enable row level security;

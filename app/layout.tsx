@@ -3,8 +3,8 @@ import "../src/index.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
-  title: "DAFS Services | Immobilier et architecture",
-  description: "Locations, biens à vendre et plans architecturaux proposés par DAFS Services.",
+  title: "DAFS Sarlu | Immobilier et architecture",
+  description: "Locations & Aménagement, biens à vendre et plans architecturaux proposés par DAFS Sarlu.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

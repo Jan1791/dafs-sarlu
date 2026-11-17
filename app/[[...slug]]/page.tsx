@@ -10,14 +10,14 @@ async function loadPublishedContent(): Promise<{
   error: boolean;
 }> {
   const defaultSettings: SiteSettings = {
-    company_name: "DAFS SERVICES",
-    legal_name: "",
-    description: "",
-    email: "",
-    phone: "",
-    whatsapp: "",
-    address: "",
-    about_title: "",
+    company_name: "DAFS Sarlu",
+    legal_name: "DAFS Sarlu",
+    description: "Locations & Aménagement, biens à vendre et plans architecturaux proposés par DAFS Sarlu.",
+    email: "dafssarlu@gmail.com",
+    phone: "+243 838 755 731",
+    whatsapp: "http://wa.me/243838755731",
+    address: "Kinshasa, R.D. Congo.",
+    about_title: "DAFS Sarlu | Immobilier et architecture",
     about_content: "",
     faq_content: "",
     legal_content: "",

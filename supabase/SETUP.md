@@ -1,4 +1,4 @@
-# DAFS Services — Supabase
+# DAFS Sarlu — Supabase
 
 Les applications publiques et admin utilisent le même projet Supabase. Les clés cliente sont dans les fichiers locaux `.env.local` (ignorés par Git). La clé secrète et le mot de passe PostgreSQL ne sont jamais utilisés dans les navigateurs.
 
@@ -40,14 +40,14 @@ Le client public lit uniquement les propriétés publiées. La création, la mod
 
 L’admin utilise Supabase Auth (connexion par e-mail et mot de passe). Il ne faut pas ajouter NextAuth/Prisma : cela créerait un second système d’authentification distinct des rôles Supabase.
 
-1. Dans Resend, créer une clé API SMTP dédiée et vérifier le domaine d’envoi DAFS Services (DNS SPF/DKIM).
+1. Dans Resend, créer une clé API SMTP dédiée et vérifier le domaine d’envoi DAFS Sarlu (DNS SPF/DKIM).
 2. Dans Supabase **Authentication → Email → SMTP Settings**, activer le SMTP personnalisé et saisir :
    - Host : smtp.resend.com
    - Port : 465 (SSL)
    - Username : resend
    - Password : la clé API SMTP Resend (secret)
    - Sender email : une adresse no-reply sur le domaine vérifié
-   - Sender name : DAFS Services
+   - Sender name : DAFS Sarlu
 3. Enregistrer puis utiliser **Send test email** depuis Supabase. Ne pas mettre la clé Resend dans NEXT_PUBLIC_*, dans un fichier .env.example ou dans Git.
 
 onboarding@resend.dev est réservé aux essais ; utilisez un domaine vérifié pour les e-mails de production. La configuration SMTP se fait dans Supabase, pas dans Next.js ni dans Vercel.

@@ -1,4 +1,4 @@
-# Mise en production DAFS Services
+# Mise en production DAFS Sarlu
 
 Le dépôt contient deux applications Next.js indépendantes, prévues pour deux projets Vercel : le site à la racine et l’admin dans admin/.
 
@@ -48,6 +48,6 @@ Vercel détecte les applications Next.js et utilise les scripts `build` présent
 
 ## Périmètre actuellement opérationnel
 
-L’admin gère les annonces, les aperçus de plans, les demandes entrantes et les informations éditoriales de base (présentation, FAQ, mentions légales, coordonnées). Les sections barèmes/simulateur, gestion des comptes depuis l’interface, rapports et réservations détaillées restent à construire à partir des données et règles métier validées par DAFS Services.
+L’admin gère les annonces, les aperçus de plans, les demandes entrantes et les informations éditoriales de base (présentation, FAQ, mentions légales, coordonnées). Les sections barèmes/simulateur, gestion des comptes depuis l’interface, rapports et réservations détaillées restent à construire à partir des données et règles métier validées par DAFS Sarlu.
 
 Les aperçus publics de plans sont pris dans le bucket public ; les fichiers originaux restent privés.

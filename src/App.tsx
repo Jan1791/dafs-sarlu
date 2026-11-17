@@ -252,11 +252,11 @@ const nav: { label: string; page: Page }[] = [
 
 function Logo({ light = false }: { light?: boolean }) {
   return (
-    <button className="logo" aria-label="DAFS Services, accueil">
+    <button className="logo" aria-label="DAFS Sarlu, accueil">
       <span className={light ? "logo-mark light" : "logo-mark"}>D</span>
       <span>
         <b className={light ? "text-white" : ""}>DAFS</b>
-        <small className={light ? "text-white/60" : ""}>SERVICES</small>
+        <small className={light ? "text-white/60" : ""}>Sarlu</small>
       </span>
     </button>
   );
@@ -399,8 +399,8 @@ function PropertyDetailPage({ property, go }: { property: PropertyListing; go: (
       </div>
       {facts.length > 0 && <div className="detail-facts">{facts.map(([value, label]) => <div key={label}><strong>{value}</strong><span>{label}</span></div>)}</div>}
       <div className="detail-content">
-        <section><h2>À propos de ce bien</h2><p>{property.description || "La description détaillée de ce bien sera renseignée par DAFS Services."}</p></section>
-        <aside><span className="eyebrow">Vous êtes intéressé ?</span><h2>{property.price}</h2><p>Contactez l’équipe pour obtenir plus d’informations ou organiser une visite.</p><button className="btn navy" onClick={() => go("contact")}>Contacter DAFS Services <Icon name="arrow" /></button></aside>
+        <section><h2>À propos de ce bien</h2><p>{property.description || "La description détaillée de ce bien sera renseignée par DAFS Sarlu."}</p></section>
+        <aside><span className="eyebrow">Vous êtes intéressé ?</span><h2>{property.price}</h2><p>Contactez l’équipe pour obtenir plus d’informations ou organiser une visite.</p><button className="btn navy" onClick={() => go("contact")}>Contacter DAFS Sarlu <Icon name="arrow" /></button></aside>
       </div>
     </main>
   );
@@ -412,7 +412,7 @@ function PlanDetailPage({ plan, go }: { plan: ArchitecturalPlan; go: (page: Page
       <div className="detail-breadcrumb"><button onClick={() => go("plans")}>Plans architecturaux</button><Icon name="chevron" size={15} /><span>{plan.reference}</span></div>
       <div className="plan-detail-grid">
         <div className="plan-detail-preview">{plan.image ? <img src={plan.image} alt={plan.name} /> : <div className="detail-gallery-empty"><Icon name="layers" size={36} /><span>Aucun aperçu fourni pour ce plan</span></div>}</div>
-        <section><span className="eyebrow">{plan.id} · {plan.category || "Plan architectural"}</span><h1>{plan.name}</h1><p className="plan-detail-meta">{plan.meta || "Caractéristiques à renseigner"}</p><p>{plan.description || "Contactez DAFS Services pour obtenir des informations sur ce modèle."}</p><button className="btn navy" onClick={() => go("contact")}>Demander le plan complet <Icon name="arrow" /></button><small>Les fichiers originaux ne sont pas accessibles publiquement.</small></section>
+        <section><span className="eyebrow">{plan.id} · {plan.category || "Plan architectural"}</span><h1>{plan.name}</h1><p className="plan-detail-meta">{plan.meta || "Caractéristiques à renseigner"}</p><p>{plan.description || "Contactez DAFS Sarlu pour obtenir des informations sur ce modèle."}</p><button className="btn navy" onClick={() => go("contact")}>Demander le plan complet <Icon name="arrow" /></button><small>Les fichiers originaux ne sont pas accessibles publiquement.</small></section>
       </div>
     </main>
   );
@@ -499,7 +499,7 @@ function HomePage({
         <SectionHead
           eyebrow="Nos expertises"
           title="Un projet, toutes les possibilités"
-          text="De la recherche d'un logement à la conception de votre future maison, DAFS Services vous accompagne à chaque étape."
+          text="De la recherche d'un logement à la conception de votre future maison, DAFS Sarlu vous accompagne à chaque étape."
         />
         <div className="category-grid">
           {[
@@ -568,7 +568,7 @@ function HomePage({
           ) : (
             <PublishedContentEmpty
               title="Les annonces seront bientôt disponibles"
-              description="Les biens publiés par l’équipe DAFS Services apparaîtront dans cet espace."
+              description="Les biens publiés par l’équipe DAFS Sarlu apparaîtront dans cet espace."
               action="Voir les locations"
               onAction={() => go("rentals")}
             />
@@ -586,7 +586,7 @@ function HomePage({
             dark
             eyebrow="Bibliothèque architecturale"
             title="Dessiner aujourd'hui les espaces de demain."
-            text={plans.length ? "Explorez les modèles publiés par DAFS Services." : "Les plans architecturaux seront présentés ici dès leur publication."}
+            text={plans.length ? "Explorez les modèles publiés par DAFS Sarlu." : "Les plans architecturaux seront présentés ici dès leur publication."}
           />
           <button className="btn gold" onClick={() => go("plans")}>
             Explorer les modèles <Icon name="arrow" />
@@ -682,7 +682,7 @@ function EmptyPublicPage({
 }) {
   return (
     <>
-      <PageHero eyebrow="DAFS Services" title={title} text={description} />
+      <PageHero eyebrow="DAFS Sarlu" title={title} text={description} />
       <section className="section container">
         <PublishedContentEmpty
           title="Aucun contenu publié pour le moment"
@@ -709,7 +709,7 @@ function EditablePublicPage({
   }
   return (
     <>
-      <PageHero eyebrow="DAFS Services" title={title} text="" />
+      <PageHero eyebrow="DAFS Sarlu" title={title} text="" />
       <section className="section container editorial-page">
         {content.split(/\n\s*\n/).map((paragraph, index) => <p key={index}>{paragraph}</p>)}
       </section>
@@ -1074,14 +1074,14 @@ function ContactPage({ settings }: { settings: SiteSettings }) {
     <>
       <PageHero
         eyebrow="Parlons de votre projet"
-        title="Contactez DAFS Services"
-          text="Décrivez votre besoin et l’équipe DAFS Services pourra reprendre contact avec vous."
+        title="Contactez DAFS Sarlu"
+          text="Décrivez votre besoin et l’équipe DAFS Sarlu pourra reprendre contact avec vous."
       />
       <section className="contact-page container">
         <aside>
           <span className="eyebrow">Coordonnées</span>
           <h2>Un échange direct et confidentiel.</h2>
-          <p>{settings.description || "Décrivez votre projet à l’équipe DAFS Services."}</p>
+          <p>{settings.description || "Décrivez votre projet à l’équipe DAFS Sarlu."}</p>
           {settings.email && <a href={`mailto:${settings.email}`}>{settings.email}</a>}
           {settings.phone && <p>{settings.phone}</p>}
           {settings.address && <p>{settings.address}</p>}
@@ -1142,7 +1142,7 @@ function ContactPage({ settings }: { settings: SiteSettings }) {
           {error && <div className="auth-error" role="alert">{error}</div>}
           {sent && (
             <div className="success" role="status">
-              <Icon name="check" /> Votre demande a bien été transmise à DAFS Services.
+              <Icon name="check" /> Votre demande a bien été transmise à DAFS Sarlu.
             </div>
           )}
         </form>
@@ -1238,7 +1238,7 @@ function Footer({ go, settings }: { go: (p: Page) => void; settings: SiteSetting
           <button onClick={() => go("estimate")}>Estimation</button>
         </div>
         <div>
-          <h4>DAFS Services</h4>
+          <h4>DAFS Sarlu</h4>
           <button onClick={() => go("about")}>À propos</button>
           <button onClick={() => go("contact")}>Contact</button>
           <button onClick={() => go("faq")}>FAQ</button>
@@ -1253,7 +1253,7 @@ function Footer({ go, settings }: { go: (p: Page) => void; settings: SiteSetting
         </div>
       </div>
       <div className="container footer-bottom">
-        <span>© DAFS Services. Tous droits réservés.</span>
+        <span>© DAFS Sarlu. Tous droits réservés.</span>
         <span>{settings.legal_name || settings.company_name}</span>
       </div>
     </footer>
@@ -1463,7 +1463,7 @@ export default function App({
         <button
           className="float-wa"
           onClick={() => go("contact")}
-          aria-label="Contacter DAFS Services"
+          aria-label="Contacter DAFS Sarlu"
         >
           <Icon name="whatsapp" />
         </button>

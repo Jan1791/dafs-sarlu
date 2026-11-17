@@ -10,6 +10,7 @@ build/
 vite.config.*.timestamp-*
 *.tsbuildinfo
 *.DS_Store
+.idea/
 *-debug.log*
 logs/
 *.log

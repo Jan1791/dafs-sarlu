@@ -1,4 +1,4 @@
-# DAFS Services public site
+# DAFS Sarlu public site
 
 Next.js App Router application using React, TypeScript, Tailwind CSS v4, and Supabase.
 
