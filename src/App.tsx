@@ -589,7 +589,7 @@ function HomePage({
           ))}
         </div>
       </section>
-      {services.length > 0 && <section className="section service-home-section"><div className="container"><div className="split-heading"><SectionHead eyebrow="Au-delà de l’immobilier" title="Nos services" text="Un accompagnement pratique pour organiser et prendre soin de vos espaces." /><button className="text-link" onClick={() => go("services")}>Tous nos services <Icon name="arrow" size={17} /></button></div><div className="service-home-grid">{services.slice(0, 2).map((service) => { const cover = service.media.find((asset) => asset.mimeType.startsWith("image/")); return <button key={service.id} className="service-home-card" onClick={() => onSelectService(service)}>{cover ? <img src={cover.url} alt={cover.alt || cover.title} loading="lazy" /> : <span className="service-home-placeholder"><Icon name="sparkle" size={28} /></span>}<span><small>{service.eyebrow || "DAFS Sarlu"}</small><strong>{service.title}</strong><em>{service.summary}</em></span><span className="round-arrow"><Icon name="arrow" /></span></button>; })}</div></div></section>}
+      {services.length > 0 && <section className="section service-home-section"><div className="container"><div className="split-heading"><SectionHead eyebrow="Au-delà de l’immobilier" title="Des espaces prêts à vivre" text="Découvrez nos équipes et nos services pour préparer, aménager et entretenir vos espaces." /><button className="text-link" onClick={() => go("services")}>Tous nos services <Icon name="arrow" size={17} /></button></div><div className="service-home-grid">{services.slice(0, 2).map((service, index) => { const cover = service.media.find((asset) => asset.mimeType.startsWith("image/")); return <button key={service.id} className="service-home-card" onClick={() => onSelectService(service)} aria-label={`Découvrir le service ${service.title}`}><span className={`service-home-visual ${cover ? "has-image" : "is-illustration"}`}>{cover ? <img src={cover.url} alt={cover.alt || cover.title} loading="lazy" /> : <span className="service-home-placeholder" aria-hidden="true"><span className="service-art-orbit" /><Icon name="sparkle" size={42} /></span>}<span className="service-home-visual-label">{String(index + 1).padStart(2, "0")} <span>·</span> {service.eyebrow || "DAFS Sarlu"}</span><span className="service-home-visual-title">{service.title}</span></span><span className="service-home-copy"><em>{service.summary}</em><span className="service-home-link">Découvrir le service <Icon name="arrow" size={16} /></span></span><span className="service-home-arrow"><Icon name="arrow" /></span></button>; })}</div></div></section>}
       <section className="section soft-bg">
         <div className="container">
           <div className="split-heading">
@@ -1177,7 +1177,7 @@ function ContactPage({ settings }: { settings: SiteSettings }) {
             <input type="checkbox" required />{" "}
             <span>J'accepte que mes informations soient utilisées pour répondre à ma demande.</span>
           </label>
-          {turnstileSiteKey && (
+          {turnstileSiteKey ? (
             <Turnstile
               ref={turnstileRef}
               siteKey={turnstileSiteKey}
@@ -1185,8 +1185,10 @@ function ContactPage({ settings }: { settings: SiteSettings }) {
               onExpire={() => setTurnstileToken("")}
               onError={() => setError("La vérification anti-robot est indisponible. Réessayez.")}
             />
-          )}
-          <button className="btn navy" type="submit" disabled={sending || Boolean(turnstileSiteKey && !turnstileToken)}>
+          ) : process.env.NODE_ENV === "production" ? (
+            <div className="auth-error" role="alert">La vérification anti-robot n’est pas configurée sur le site.</div>
+          ) : null}
+          <button className="btn navy" type="submit" disabled={sending || Boolean(turnstileSiteKey && !turnstileToken) || (process.env.NODE_ENV === "production" && !turnstileSiteKey)}>
             {sending ? "Envoi…" : "Envoyer la demande"} <Icon name="arrow" />
           </button>
           {error && <div className="auth-error" role="alert">{error}</div>}

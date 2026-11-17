@@ -2844,16 +2844,26 @@ footer {
 .service-public-copy p { margin: 0 0 20px; color: #687386; font-size: 13px; line-height: 1.7; }
 .service-public-copy .text-link { margin-top: auto; display: inline-flex; align-items: center; gap: 8px; font-size: 12px; }
 .service-home-section { background: #f1efe9; }
-.service-home-grid { margin-top: 28px; }
-.service-home-card { position: relative; display: grid; grid-template-columns: 38% 1fr; align-items: stretch; min-height: 195px; }
-.service-home-card > img,
-.service-home-placeholder { width: 100%; height: 100%; min-height: 195px; object-fit: cover; }
-.service-home-placeholder { display: grid; place-items: center; color: #c6a46a; background: #14263d; }
-.service-home-card > span:nth-child(2) { display: grid; align-content: center; gap: 8px; padding: 24px 55px 24px 24px; }
-.service-home-card small { color: #a47d42; font-size: 9px; letter-spacing: .12em; text-transform: uppercase; }
-.service-home-card strong { font: 700 19px/1.25 "Manrope", sans-serif; }
-.service-home-card em { color: #687386; font-size: 12px; line-height: 1.6; font-style: normal; }
-.service-home-card .round-arrow { position: absolute; right: 17px; bottom: 17px; }
+.service-home-grid { margin-top: 30px; }
+.service-home-card { position: relative; display: grid; grid-template-rows: 290px 1fr; min-height: 470px; padding: 0; border: 1px solid #e5e0d6; border-radius: 16px; transition: transform .25s ease, box-shadow .25s ease; }
+.service-home-visual { position: relative; display: block; overflow: hidden; min-width: 0; background: #14263d; }
+.service-home-visual { border-radius: 15px 15px 0 0; }
+.service-home-visual::after { position: absolute; inset: 0; content: ""; background: linear-gradient(180deg, rgb(11 25 41 / 5%) 15%, rgb(11 25 41 / 78%) 100%); pointer-events: none; }
+.service-home-visual > img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s ease; }
+.service-home-card:hover .service-home-visual > img { transform: scale(1.035); }
+.service-home-placeholder { position: absolute; inset: 0; display: grid; place-items: center; overflow: hidden; color: #e4c48e; background: radial-gradient(ellipse at 78% 23%, rgb(194 157 101 / 34%), transparent 34%), linear-gradient(135deg, #203b57, #102136 70%); }
+.service-art-orbit { position: absolute; width: 230px; height: 230px; border: 1px solid rgb(228 196 142 / 28%); border-radius: 50%; box-shadow: 0 0 0 26px rgb(228 196 142 / 5%), 0 0 0 54px rgb(228 196 142 / 4%); }
+.service-home-placeholder > svg { position: relative; filter: drop-shadow(0 8px 18px rgb(0 0 0 / 20%)); }
+.service-home-visual-label,
+.service-home-visual-title { position: absolute; z-index: 1; left: 25px; color: white; text-align: left; }
+.service-home-visual-label { top: 22px; max-width: calc(100% - 50px); color: #f1d9ad; font-size: 10px; font-weight: 700; letter-spacing: .15em; line-height: 1.5; text-transform: uppercase; }
+.service-home-visual-label span { margin-inline: 5px; }
+.service-home-visual-title { right: 25px; bottom: 23px; font: 700 29px/1.15 "Manrope", sans-serif; }
+.service-home-copy { display: grid; align-content: start; gap: 10px; padding: 23px 54px 25px 25px; text-align: left; }
+.service-home-copy > em { display: -webkit-box; overflow: hidden; color: #687386; font-size: 13px; font-style: normal; line-height: 1.65; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+.service-home-link { display: inline-flex; align-items: center; gap: 8px; margin-top: 4px; color: #9a7139; font-size: 12px; font-weight: 700; }
+.service-home-arrow { position: absolute; right: 19px; bottom: 22px; display: grid; width: 38px; height: 38px; place-items: center; border: 1px solid #e5e0d6; border-radius: 50%; color: #14263d; transition: color .2s ease, background .2s ease; }
+.service-home-card:hover .service-home-arrow { color: white; background: #14263d; }
 .public-service-detail { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 48px; padding-block: 68px 100px; align-items: start; }
 .public-service-intro .editorial-page { padding: 0 0 24px; }
 .public-service-features { margin: 18px 0 28px; padding: 22px; border: 1px solid #e7e9ed; border-radius: 10px; }
@@ -2861,11 +2871,11 @@ footer {
 .public-service-features ul { display: grid; gap: 12px; margin: 18px 0 0; padding: 0; list-style: none; }
 .public-service-features li { display: flex; gap: 10px; align-items: start; color: #4d5a6b; font-size: 13px; line-height: 1.5; }
 .public-service-features li svg { flex: 0 0 auto; color: #a47d42; }
-.public-service-media { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.public-service-media figure { position: relative; min-height: 190px; margin: 0; overflow: hidden; border-radius: 10px; background: #f0efeb; }
+.public-service-media { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-content: start; }
+.public-service-media figure { min-width: 0; margin: 0; overflow: hidden; border: 1px solid #e8e5de; border-radius: 12px; background: white; box-shadow: 0 12px 32px rgb(20 38 61 / 6%); }
 .public-service-media img,
-.public-service-media video { width: 100%; height: 100%; min-height: 190px; object-fit: cover; }
-.public-service-media figcaption { position: absolute; inset: auto 0 0; padding: 24px 12px 10px; color: white; font-size: 11px; background: linear-gradient(transparent, rgb(0 0 0 / 65%)); }
+.public-service-media video { display: block; width: 100%; aspect-ratio: 4 / 3; background: #14263d; object-fit: cover; }
+.public-service-media figcaption { min-height: 54px; padding: 13px 15px 15px; color: #4d5a6b; font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; white-space: pre-wrap; }
 @media (max-width: 800px) {
   .service-public-grid,
   .service-home-grid,
@@ -2879,8 +2889,8 @@ footer {
   .service-public-image,
   .service-public-image img { min-height: 180px; }
   .service-public-copy { padding: 22px; }
-  .service-home-card { grid-template-columns: 1fr; }
-  .service-home-card > img,
-  .service-home-placeholder { max-height: 190px; }
+  .service-home-card { grid-template-rows: 220px 1fr; min-height: 0; }
+  .service-home-visual-title { left: 20px; right: 20px; font-size: 24px; }
+  .service-home-copy { padding: 20px 54px 22px 20px; }
   .public-service-media { grid-template-columns: 1fr; }
 }

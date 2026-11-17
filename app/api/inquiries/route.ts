@@ -29,7 +29,10 @@ function tooManyRequests(ip: string) {
 
 async function verifyTurnstile(token: unknown, request: NextRequest) {
   const secret = process.env.TURNSTILE_SECRET_KEY;
-  if (!secret) return process.env.NODE_ENV !== "production";
+  if (!secret) {
+    console.error("Turnstile Siteverify is not configured for this deployment.");
+    return null;
+  }
   if (typeof token !== "string" || !token) return false;
 
   const ip =
@@ -45,11 +48,28 @@ async function verifyTurnstile(token: unknown, request: NextRequest) {
     const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
       method: "POST",
       body: form,
+      headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
       cache: "no-store",
     });
-    const result = (await response.json()) as { success?: boolean; hostname?: string };
-    return response.ok && result.success === true && result.hostname === new URL(request.url).hostname;
+    const result = (await response.json()) as { success?: boolean; hostname?: string; "error-codes"?: string[] };
+    if (!response.ok || result.success !== true) {
+      console.warn("Turnstile Siteverify rejected an inquiry token.", {
+        status: response.status,
+        errorCodes: result["error-codes"] ?? [],
+      });
+      return false;
+    }
+    const expectedHostname = new URL(request.url).hostname;
+    if (result.hostname !== expectedHostname) {
+      console.warn("Turnstile Siteverify returned an unexpected hostname.", {
+        expectedHostname,
+        receivedHostname: result.hostname ?? "",
+      });
+      return false;
+    }
+    return true;
   } catch {
+    console.error("Turnstile Siteverify request failed.");
     return false;
   }
 }
@@ -83,7 +103,11 @@ export async function POST(request: NextRequest) {
   if (typeof payload.website === "string" && payload.website.trim()) {
     return NextResponse.json({ ok: true }, { status: 201 });
   }
-  if (!(await verifyTurnstile(payload.turnstileToken, request))) {
+  const turnstileResult = await verifyTurnstile(payload.turnstileToken, request);
+  if (turnstileResult === null) {
+    return NextResponse.json({ error: "La vérification anti-robot n’est pas configurée sur le site." }, { status: 503 });
+  }
+  if (!turnstileResult) {
     return NextResponse.json({ error: "La vérification anti-robot a expiré. Réessayez." }, { status: 400 });
   }
 
