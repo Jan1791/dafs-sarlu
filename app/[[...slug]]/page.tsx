@@ -24,7 +24,7 @@ async function loadPublishedContent(): Promise<{
     about_content: "DAFS Sarlu réunit des services immobiliers et d’accompagnement de projets : locations, biens à vendre, plans architecturaux, déménagement et aménagement, ainsi que le service Cleaner pour le nettoyage de logements et d’espaces professionnels.\n\nLe site présente les biens, plans et services publiés par l’équipe. Les informations détaillées d’un bien ou d’une prestation se confirment directement auprès de DAFS Sarlu avant toute décision.\n\nVous pouvez parcourir les offres disponibles, consulter les fiches de services et transmettre une demande depuis la page Contact.\n\nDAFS Sarlu a été créée en (année de création). L’entreprise est portée par (nom ou présentation du fondateur et de l’équipe) et s’appuie sur (expérience, compétences ou partenariats à préciser).\n\nNotre mission est de (mission de l’entreprise à compléter). Notre vision pour les prochaines années est de (ambition ou vision à compléter).\n\nDAFS Sarlu intervient à Kinshasa, notamment à (communes et quartiers effectivement desservis). Pour une demande située ailleurs, l’équipe confirme au cas par cas sa capacité à intervenir.\n\nPour chaque demande, nous nous engageons à (engagements vérifiables à préciser : délais de réponse, suivi, qualité ou transparence). Les modalités, les délais et le périmètre sont confirmés avant le démarrage de toute prestation.",
     faq_content: "",
     legal_content: "Éditeur du site : DAFS Sarlu.\n\nContact : dafssarlu@gmail.com.\nAdresse indiquée : Kinshasa, R.D. Congo.\n\nLes informations d’immatriculation de l’entreprise, le responsable de publication et les coordonnées de l’hébergeur doivent être complétés par DAFS Sarlu.\n\nLes contenus concernant les biens et services sont publiés à titre informatif. Leur disponibilité, leurs caractéristiques et leurs modalités doivent être confirmées auprès de DAFS Sarlu. Toute estimation de construction communiquée après étude reste indicative et ne constitue pas un devis contractuel.",
-    home_title: "DAFS Sarlu\nAu service de vos projets",
+    home_title: "Agence Immobilière\nau service de vos projets.",
     home_intro: "Immobilier, plans architecturaux, déménagement, aménagement et nettoyage : découvrez les services DAFS Sarlu et échangez avec l’équipe autour de votre projet.",
   };
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -165,6 +165,7 @@ async function loadPublishedContent(): Promise<{
     const storedPhone = typeof values.phone === "string" ? values.phone : "";
     const storedWhatsapp = typeof values.whatsapp === "string" ? values.whatsapp : "";
     const storedAboutTitle = typeof values.about_title === "string" ? values.about_title : "";
+    const storedHomeTitle = typeof values.home_title === "string" ? values.home_title : "";
     const legalContent = typeof values.legal_content === "string" ? values.legal_content : "";
     const settings: SiteSettings = {
       company_name: typeof values.company_name === "string" ? values.company_name : defaultSettings.company_name,
@@ -178,7 +179,7 @@ async function loadPublishedContent(): Promise<{
       about_content: typeof values.about_content === "string" && values.about_content ? values.about_content : defaultSettings.about_content,
       faq_content: typeof values.faq_content === "string" ? values.faq_content : "",
       legal_content: (legalContent || defaultSettings.legal_content).replace(/https?:\/\/wa\.me\/\d+/gi, "").replace(/\+?243\s*838\s*755\s*731/g, "").trim(),
-      home_title: typeof values.home_title === "string" && values.home_title ? values.home_title : defaultSettings.home_title,
+      home_title: storedHomeTitle === "Aujourd'hui, c'est un autre jour." ? defaultSettings.home_title : storedHomeTitle || defaultSettings.home_title,
       home_intro: typeof values.home_intro === "string" && values.home_intro ? values.home_intro : defaultSettings.home_intro,
     };
     const mediaByService = new Map<string, ServiceMedia[]>();

@@ -15,6 +15,7 @@ Dans le tableau de bord Supabase, ouvrir **SQL Editor** et exécuter les fichier
 7. `migrations/202611170003_kinshasa_property_seed.sql` importe les quatre annonces et leurs médias fournis dans `public/property-media`.
 8. `migrations/202611170004_expand_public_service_copy.sql` développe les textes initiaux de Déménagement & aménagement et Cleaner en conservant les versions déjà modifiées dans l’admin.
 9. `migrations/202611170005_remove_old_public_phone.sql` retire l’ancien numéro des coordonnées publiques et de la page légale sans écraser les autres réglages.
+10. `migrations/202611170006_homepage_title.sql` met à jour le titre de la page d’accueil.
 
 ## Créer le premier compte administrateur
 
