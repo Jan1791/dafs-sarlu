@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ComponentType, type FormEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ComponentType, type FormEvent, type ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
+import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import { supabase } from "./lib/supabase";
 import SiteContentPage from "./site-content";
 import {
@@ -1571,18 +1572,28 @@ function AdminAccess({
 }: {
   pending: boolean;
   error: string;
-  onSignIn: (email: string, password: string) => Promise<void>;
+  onSignIn: (email: string, password: string, captchaToken?: string) => Promise<void>;
 }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [configError, setConfigError] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
+  const captchaRef = useRef<TurnstileInstance | null>(null);
+  const captchaSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setConfigError("");
+    if (captchaSiteKey && !captchaToken) {
+      setConfigError("Veuillez terminer la vérification anti-robot avant de vous connecter.");
+      return;
+    }
     try {
-      await onSignIn(email.trim(), password);
+      await onSignIn(email.trim(), password, captchaToken || undefined);
     } catch (error) {
       setConfigError(error instanceof Error ? error.message : "Connexion impossible.");
+    } finally {
+      setCaptchaToken("");
+      captchaRef.current?.reset();
     }
   };
 
@@ -1604,8 +1615,15 @@ function AdminAccess({
               Mot de passe
               <input type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} />
             </label>
+            {captchaSiteKey && <Turnstile
+              ref={captchaRef}
+              siteKey={captchaSiteKey}
+              onSuccess={setCaptchaToken}
+              onExpire={() => setCaptchaToken("")}
+              onError={() => { setCaptchaToken(""); setConfigError("La vérification anti-robot est indisponible. Réessayez."); }}
+            />}
             {(error || configError) && <p className="auth-error" role="alert">{error || configError}</p>}
-            <Button type="submit" disabled={pending}>
+            <Button type="submit" disabled={pending || Boolean(captchaSiteKey && !captchaToken)}>
               {pending ? "Connexion…" : "Se connecter"}
             </Button>
           </form>
@@ -1986,11 +2004,15 @@ function App() {
     setCompanySettings(settings);
   };
 
-  const handleSignIn = async (email: string, password: string) => {
+  const handleSignIn = async (email: string, password: string, captchaToken?: string) => {
     if (!supabase) throw new Error("La connexion Supabase n’est pas configurée.");
     setAuthPending(true);
     setAuthError("");
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+      options: captchaToken ? { captchaToken } : undefined,
+    });
     setAuthPending(false);
     if (error) throw new Error("Identifiants invalides ou connexion indisponible.");
   };

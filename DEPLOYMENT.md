@@ -12,12 +12,12 @@ Les tables doivent répondre avant le déploiement : le site utilise les annonce
 
 ## 2. Configurer Turnstile
 
-Créer un widget Cloudflare Turnstile et autoriser les domaines de production du site public. Dans les variables du déploiement public, définir :
+Créer un widget Cloudflare Turnstile et autoriser les noms d’hôte du site public et de l’admin. La clé publique doit correspondre au secret de ce même widget. Dans les variables Vercel, définir :
 
 - `NEXT_PUBLIC_TURNSTILE_SITE_KEY` avec la clé publique du widget ;
 - `TURNSTILE_SECRET_KEY` avec sa clé secrète.
 
-Les demandes publiques sont refusées en production si le secret n’est pas présent. La clé secrète reste côté serveur.
+Pour le site public, `TURNSTILE_SECRET_KEY` est lu par la route serveur `/api/inquiries` et ne doit jamais porter le préfixe `NEXT_PUBLIC_`. Les demandes de contact sont refusées si le secret manque ou si Cloudflare rejette le jeton. L’admin n’envoie pas ce secret à Vercel : son formulaire transmet le jeton CAPTCHA à Supabase Auth, qui vérifie le jeton avec le secret configuré dans Supabase.
 
 ## 3. Créer les déploiements Vercel
 
@@ -36,6 +36,7 @@ Déploiement admin — Root Directory `admin` :
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 - `NEXT_PUBLIC_PUBLIC_SITE_URL` (URL du site public)
+- `NEXT_PUBLIC_TURNSTILE_SITE_KEY` (même widget autorisant le domaine de l’admin)
 
 Vercel détecte les applications Next.js et utilise les scripts `build` présents dans chaque `package.json`.
 

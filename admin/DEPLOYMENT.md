@@ -5,10 +5,13 @@ L’application est préparée pour Vercel avec Next.js. Configurer ces variable
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 - `NEXT_PUBLIC_PUBLIC_SITE_URL`
+- `NEXT_PUBLIC_TURNSTILE_SITE_KEY` (la clé publique du widget Cloudflare utilisé par Supabase Auth)
 
 Le schéma Supabase doit être appliqué avant la première connexion. Créer ensuite le premier compte Auth et lui attribuer le rôle administrateur selon `DAFS-Services/supabase/SETUP.md`.
 
 Dans Supabase **Authentication → URL Configuration**, ajouter l’URL HTTPS de l’admin aux URL du site et de redirection. Configurer un SMTP dédié pour les courriels d’authentification avant d’ouvrir l’accès.
+
+Si la protection CAPTCHA est activée dans Supabase Auth, le formulaire de connexion admin affiche Turnstile et transmet son jeton à `signInWithPassword`. Autoriser le nom d’hôte de l’admin dans le widget Cloudflare.
 
 Le dépôt GitHub contient les deux applications. Dans Vercel, importer ce dépôt et définir **Root Directory** sur admin. Le guide commun se trouve dans ../DEPLOYMENT.md.
 
