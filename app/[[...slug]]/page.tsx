@@ -13,7 +13,7 @@ async function loadPublishedContent(): Promise<{
   const defaultSettings: SiteSettings = {
     company_name: "DAFS Sarlu",
     legal_name: "DAFS Sarlu",
-    description: "Locations & Aménagement, biens à vendre et plans architecturaux proposés par DAFS Sarlu.",
+    description: "Locations, maisons et parcelles à vendre, plans architecturaux, déménagement, aménagement et nettoyage proposés par DAFS Sarlu.",
     email: "dafssarlu@gmail.com",
     phone: "+243 838 755 731",
     whatsapp: "http://wa.me/243838755731",
@@ -122,6 +122,9 @@ async function loadPublishedContent(): Promise<{
         type,
         meta: [...areas, ...rooms].join(" · ") || "Détails disponibles sur demande",
         price: `${amount}${period}`,
+        priceAmount: row.price_amount,
+        currency: row.currency,
+        pricingPeriod: row.pricing_period,
         image,
         description: row.description || row.short_description || "",
         bedrooms: row.bedrooms,
