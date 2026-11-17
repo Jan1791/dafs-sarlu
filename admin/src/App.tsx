@@ -1219,8 +1219,8 @@ function SettingsPage({
               <input maxLength={30} type="tel" value={draft.whatsapp} onChange={(event) => update("whatsapp", event.target.value)} placeholder="Numéro au format international" />
             </label>
             <label>
-              <span>Adresse</span>
-              <input maxLength={250} value={draft.address} onChange={(event) => update("address", event.target.value)} placeholder="Adresse de l’entreprise" />
+              <span>Adresse complète (pour l’itinéraire)</span>
+              <input maxLength={250} value={draft.address} onChange={(event) => update("address", event.target.value)} placeholder="Avenue, numéro, quartier et commune, Kinshasa" />
             </label>
             <label className="full-field">
               <span>Titre de la page « À propos »</span>

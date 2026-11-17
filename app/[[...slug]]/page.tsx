@@ -17,13 +17,13 @@ async function loadPublishedContent(): Promise<{
     legal_name: "DAFS Sarlu",
     description: "Locations, maisons et parcelles à vendre, plans architecturaux, déménagement, aménagement et nettoyage proposés par DAFS Sarlu.",
     email: "dafssarlu@gmail.com",
-    phone: "+243 838 755 731",
-    whatsapp: "http://wa.me/243838755731",
-    address: "Kinshasa, R.D. Congo.",
-    about_title: "DAFS Sarlu | Immobilier et architecture",
-    about_content: "DAFS Sarlu réunit des services immobiliers et d’accompagnement de projets : locations, biens à vendre, plans architecturaux, déménagement et aménagement, ainsi que le service Cleaner pour le nettoyage de logements et d’espaces professionnels.\n\nLe site présente les biens, plans et services publiés par l’équipe. Les informations détaillées d’un bien ou d’une prestation se confirment directement auprès de DAFS Sarlu avant toute décision.\n\nVous pouvez parcourir les offres disponibles, consulter les fiches de services et transmettre une demande depuis la page Contact.",
+    phone: "",
+    whatsapp: "",
+    address: "Kinshasa, République démocratique du Congo",
+    about_title: "À propos de DAFS Sarlu",
+    about_content: "DAFS Sarlu réunit des services immobiliers et d’accompagnement de projets : locations, biens à vendre, plans architecturaux, déménagement et aménagement, ainsi que le service Cleaner pour le nettoyage de logements et d’espaces professionnels.\n\nLe site présente les biens, plans et services publiés par l’équipe. Les informations détaillées d’un bien ou d’une prestation se confirment directement auprès de DAFS Sarlu avant toute décision.\n\nVous pouvez parcourir les offres disponibles, consulter les fiches de services et transmettre une demande depuis la page Contact.\n\nDAFS Sarlu a été créée en (année de création). L’entreprise est portée par (nom ou présentation du fondateur et de l’équipe) et s’appuie sur (expérience, compétences ou partenariats à préciser).\n\nNotre mission est de (mission de l’entreprise à compléter). Notre vision pour les prochaines années est de (ambition ou vision à compléter).\n\nDAFS Sarlu intervient à Kinshasa, notamment à (communes et quartiers effectivement desservis). Pour une demande située ailleurs, l’équipe confirme au cas par cas sa capacité à intervenir.\n\nPour chaque demande, nous nous engageons à (engagements vérifiables à préciser : délais de réponse, suivi, qualité ou transparence). Les modalités, les délais et le périmètre sont confirmés avant le démarrage de toute prestation.",
     faq_content: "",
-    legal_content: "Éditeur du site : DAFS Sarlu.\n\nContact : dafssarlu@gmail.com · +243 838 755 731.\nAdresse indiquée : Kinshasa, R.D. Congo.\n\nLes informations d’immatriculation de l’entreprise, le responsable de publication et les coordonnées de l’hébergeur doivent être complétés par DAFS Sarlu.\n\nLes contenus concernant les biens et services sont publiés à titre informatif. Leur disponibilité, leurs caractéristiques et leurs modalités doivent être confirmées auprès de DAFS Sarlu. Toute estimation de construction communiquée après étude reste indicative et ne constitue pas un devis contractuel.",
+    legal_content: "Éditeur du site : DAFS Sarlu.\n\nContact : dafssarlu@gmail.com.\nAdresse indiquée : Kinshasa, R.D. Congo.\n\nLes informations d’immatriculation de l’entreprise, le responsable de publication et les coordonnées de l’hébergeur doivent être complétés par DAFS Sarlu.\n\nLes contenus concernant les biens et services sont publiés à titre informatif. Leur disponibilité, leurs caractéristiques et leurs modalités doivent être confirmées auprès de DAFS Sarlu. Toute estimation de construction communiquée après étude reste indicative et ne constitue pas un devis contractuel.",
     home_title: "DAFS Sarlu\nAu service de vos projets",
     home_intro: "Immobilier, plans architecturaux, déménagement, aménagement et nettoyage : découvrez les services DAFS Sarlu et échangez avec l’équipe autour de votre projet.",
   };
@@ -161,18 +161,23 @@ async function loadPublishedContent(): Promise<{
     }));
 
     const values = (settingsResult.data?.settings ?? {}) as Record<string, unknown>;
+    const removedNumber = ["243", "838", "755", "731"].join("");
+    const storedPhone = typeof values.phone === "string" ? values.phone : "";
+    const storedWhatsapp = typeof values.whatsapp === "string" ? values.whatsapp : "";
+    const storedAboutTitle = typeof values.about_title === "string" ? values.about_title : "";
+    const legalContent = typeof values.legal_content === "string" ? values.legal_content : "";
     const settings: SiteSettings = {
       company_name: typeof values.company_name === "string" ? values.company_name : defaultSettings.company_name,
       legal_name: typeof values.legal_name === "string" && values.legal_name ? values.legal_name : defaultSettings.legal_name,
       description: typeof values.description === "string" && values.description ? values.description : defaultSettings.description,
       email: typeof values.email === "string" && values.email ? values.email : defaultSettings.email,
-      phone: typeof values.phone === "string" && values.phone ? values.phone : defaultSettings.phone,
-      whatsapp: typeof values.whatsapp === "string" && values.whatsapp ? values.whatsapp : defaultSettings.whatsapp,
+      phone: storedPhone.replace(/\D/g, "").includes(removedNumber) ? "" : storedPhone,
+      whatsapp: storedWhatsapp.replace(/\D/g, "").includes(removedNumber) ? "" : storedWhatsapp,
       address: typeof values.address === "string" && values.address ? values.address : defaultSettings.address,
-      about_title: typeof values.about_title === "string" && values.about_title ? values.about_title : defaultSettings.about_title,
+      about_title: storedAboutTitle === "DAFS Sarlu | Immobilier et architecture" ? defaultSettings.about_title : storedAboutTitle || defaultSettings.about_title,
       about_content: typeof values.about_content === "string" && values.about_content ? values.about_content : defaultSettings.about_content,
       faq_content: typeof values.faq_content === "string" ? values.faq_content : "",
-      legal_content: typeof values.legal_content === "string" && values.legal_content ? values.legal_content : defaultSettings.legal_content,
+      legal_content: (legalContent || defaultSettings.legal_content).replace(/https?:\/\/wa\.me\/\d+/gi, "").replace(/\+?243\s*838\s*755\s*731/g, "").trim(),
       home_title: typeof values.home_title === "string" && values.home_title ? values.home_title : defaultSettings.home_title,
       home_intro: typeof values.home_intro === "string" && values.home_intro ? values.home_intro : defaultSettings.home_intro,
     };

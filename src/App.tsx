@@ -59,7 +59,8 @@ function pageFromPath(pathname: string): Page {
 function createWhatsAppHref(settings: Pick<SiteSettings, "whatsapp" | "phone">, message?: string) {
   let href: URL | null = null;
   const candidate = settings.whatsapp.trim();
-  if (candidate) {
+  const removedContactDigits = ["243", "838", "755", "731"].join("");
+  if (candidate && !candidate.replace(/\D/g, "").includes(removedContactDigits)) {
     try {
       href = new URL(/^https?:\/\//i.test(candidate) ? candidate : `https://${candidate}`);
       if (href.hostname === "wa.me" || href.hostname.endsWith(".wa.me")) href.protocol = "https:";
@@ -69,11 +70,27 @@ function createWhatsAppHref(settings: Pick<SiteSettings, "whatsapp" | "phone">, 
   }
   if (!href) {
     const digits = settings.phone.replace(/\D/g, "");
-    if (digits) href = new URL(`https://wa.me/${digits}`);
+    if (digits && !digits.includes(removedContactDigits)) href = new URL(`https://wa.me/${digits}`);
   }
   if (!href) return "";
   if (message) href.searchParams.set("text", message);
   return href.toString();
+}
+
+function createDirectionsHref(address: string) {
+  const cleanAddress = address.trim();
+  if (cleanAddress.length < 16 || /^kinshasa(?:\s*,.*)?$/i.test(cleanAddress)) return "";
+  if (!/\d|avenue|boulevard|\brue\b|\broute\b|croisement|rep[eè]re|immeuble|parcelle|rond.point/i.test(cleanAddress)) return "";
+  const url = new URL("https://www.google.com/maps/dir/");
+  url.searchParams.set("api", "1");
+  url.searchParams.set("destination", `${cleanAddress}, Kinshasa, République démocratique du Congo`);
+  url.searchParams.set("dir_action", "navigate");
+  return url.toString();
+}
+
+function hideRemovedContact(value: string) {
+  const digits = value.replace(/\D/g, "");
+  return !digits.includes(["243", "838", "755", "731"].join(""));
 }
 
 type IconName =
@@ -1077,7 +1094,7 @@ function FAQPage({ content, go }: { content: string; go: (page: Page) => void })
     ["Comment préparer une demande de déménagement ?", "Indiquez les lieux de départ et d’arrivée, la date souhaitée, le volume à transporter, les éléments à démonter et les contraintes d’accès. Ces informations aideront DAFS Sarlu à évaluer le périmètre de la prestation."],
     ["Que faut-il préciser pour demander Cleaner ?", "Décrivez le type de lieu, la commune et le quartier, la superficie approximative, les tâches souhaitées et la fréquence. Confirmez avec DAFS Sarlu les produits, équipements, disponibilités et modalités."],
     ["Les prix affichés sont-ils définitifs ?", "Les prix des biens sont ceux communiqués dans les annonces et doivent être confirmés auprès de DAFS Sarlu. Les tarifs des services et les estimations de construction sont à convenir après étude du besoin."],
-    ["Comment contacter DAFS Sarlu ?", "Utilisez le formulaire de contact, écrivez à dafssarlu@gmail.com ou appelez le +243 838 755 731. Indiquez au moins un moyen de vous joindre dans le formulaire."],
+    ["Comment contacter DAFS Sarlu ?", "Utilisez le formulaire de contact ou écrivez à dafssarlu@gmail.com. Indiquez au moins un moyen de vous joindre dans le formulaire."],
   ];
   return <>
     <PageHero eyebrow="Besoin d’un renseignement ?" title="Questions fréquentes" text="Quelques repères pour parcourir les offres et contacter DAFS Sarlu." />
@@ -1506,14 +1523,21 @@ function ContactPage({ settings }: { settings: SiteSettings }) {
           text="Décrivez votre besoin et l’équipe DAFS Sarlu pourra reprendre contact avec vous."
       />
       <section className="contact-page container">
-        <aside>
-          <span className="eyebrow">Coordonnées</span>
-          <h2>Un échange direct autour de votre projet.</h2>
-          <p>{settings.description || "Décrivez votre projet à l’équipe DAFS Sarlu."}</p>
-          {settings.email && <a href={`mailto:${settings.email}`}>{settings.email}</a>}
-          {settings.phone && <a href={`tel:${settings.phone.replace(/[^+\d]/g, "")}`}>{settings.phone}</a>}
-          {settings.address && <p>{settings.address}</p>}
-          {createWhatsAppHref(settings) && <a className="contact-whatsapp-link" href={createWhatsAppHref(settings)} target="_blank" rel="noreferrer">Nous écrire sur WhatsApp</a>}
+        <aside className="contact-info-panel">
+          <span className="eyebrow">DAFS Sarlu · Kinshasa</span>
+          <h2>Parlons de votre projet.</h2>
+          <p>{settings.description || "Décrivez votre besoin et l’équipe vous orientera vers le service adapté."}</p>
+          <div className="contact-info-list">
+            {settings.email && <a className="contact-info-item" href={`mailto:${settings.email}`}><span className="contact-info-icon"><Icon name="mail" size={19} /></span><span><small>E-mail</small><strong>{settings.email}</strong></span></a>}
+            {settings.phone && hideRemovedContact(settings.phone) && <a className="contact-info-item" href={`tel:${settings.phone.replace(/[^+\d]/g, "")}`}><span className="contact-info-icon"><Icon name="phone" size={19} /></span><span><small>Téléphone</small><strong>{settings.phone}</strong></span></a>}
+            {createWhatsAppHref(settings) && <a className="contact-info-item" href={createWhatsAppHref(settings)} target="_blank" rel="noreferrer"><span className="contact-info-icon"><Icon name="whatsapp" size={19} /></span><span><small>Message direct</small><strong>Nous écrire sur WhatsApp</strong></span></a>}
+          </div>
+          <div className="contact-location-card">
+            <span className="contact-info-icon"><Icon name="map" size={19} /></span>
+            <div><small>Nous trouver</small><strong>{settings.address || "Kinshasa, République démocratique du Congo"}</strong>
+              {createDirectionsHref(settings.address) ? <a href={createDirectionsHref(settings.address)} target="_blank" rel="noreferrer">Ouvrir l’itinéraire <Icon name="arrow" size={15} /></a> : <span className="contact-location-note">Adresse précise à compléter par l’entreprise pour activer l’itinéraire.</span>}
+            </div>
+          </div>
         </aside>
         <form
           className="contact-form"
@@ -1681,7 +1705,7 @@ function Footer({ go, settings }: { go: (p: Page) => void; settings: SiteSetting
         <div>
           <h4>Nous contacter</h4>
           {settings.email && <a href={`mailto:${settings.email}`}>{settings.email}</a>}
-          {settings.phone && <a href={`tel:${settings.phone.replace(/[^+\d]/g, "")}`}>{settings.phone}</a>}
+          {settings.phone && hideRemovedContact(settings.phone) && <a href={`tel:${settings.phone.replace(/[^+\d]/g, "")}`}>{settings.phone}</a>}
           {createWhatsAppHref(settings) && <a href={createWhatsAppHref(settings)} target="_blank" rel="noreferrer">Nous écrire sur WhatsApp</a>}
           {settings.address && <p>{settings.address}</p>}
         </div>

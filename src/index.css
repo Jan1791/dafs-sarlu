@@ -3103,6 +3103,27 @@ footer {
 .detail-heading { align-items: flex-start; }
 .detail-heading h1 { max-width: 780px; line-height: 1.1; }
 .contact-page { gap: clamp(32px, 7vw, 100px); }
+.contact-info-panel {
+  align-self: start;
+  padding: clamp(26px, 4vw, 44px);
+  border-radius: 18px;
+  background: #14263d;
+  box-shadow: 0 22px 54px rgb(20 38 61 / 14%);
+}
+.contact-info-panel .eyebrow { color: #e5c78f; }
+.contact-info-panel h2 { color: #fff !important; font-size: clamp(30px, 3.2vw, 42px) !important; margin: 15px 0 14px !important; }
+.contact-info-panel > p { color: rgb(255 255 255 / 72%) !important; font-size: 14px !important; margin: 0; }
+.contact-info-list { display: grid; gap: 10px; margin-top: 28px; }
+.contact-info-item { display: flex; align-items: center; gap: 14px; min-width: 0; padding: 13px; border: 1px solid rgb(255 255 255 / 13%); border-radius: 11px; color: #fff; text-decoration: none; transition: background .18s ease, border-color .18s ease; }
+.contact-info-item:hover { background: rgb(255 255 255 / 7%); border-color: rgb(229 199 143 / 50%); }
+.contact-info-item > span:last-child { display: grid; gap: 3px; min-width: 0; }
+.contact-info-item small, .contact-location-card small { color: #d8bd8d; font-size: 10px; letter-spacing: .09em; text-transform: uppercase; }
+.contact-info-item strong, .contact-location-card strong { color: #fff; font-size: 13px; font-weight: 600; line-height: 1.5; overflow-wrap: anywhere; }
+.contact-info-icon { flex: 0 0 42px; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; background: rgb(229 199 143 / 13%); color: #e5c78f; }
+.contact-location-card { display: flex; align-items: flex-start; gap: 14px; margin-top: 20px; padding: 18px 14px 4px; border-top: 1px solid rgb(255 255 255 / 15%); }
+.contact-location-card > div { display: grid; gap: 7px; min-width: 0; }
+.contact-location-card a { display: inline-flex; align-items: center; gap: 7px; width: fit-content; margin-top: 4px; color: #e5c78f; font-size: 12px; font-weight: 600; text-decoration: none; }
+.contact-location-note { color: rgb(255 255 255 / 58%); font-size: 11px; line-height: 1.6; }
 
 @media (max-width: 767px) {
   .container { width: calc(100% - 32px); }
@@ -3113,4 +3134,6 @@ footer {
   .values-grid { grid-template-columns: 1fr; }
   .detail-heading { display: grid; align-items: start; }
   .detail-heading > strong { font-size: 23px; }
+  .contact-page { grid-template-columns: 1fr; }
+  .contact-info-panel { padding: 24px 20px; }
 }
