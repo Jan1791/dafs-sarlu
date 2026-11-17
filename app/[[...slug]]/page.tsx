@@ -3,6 +3,29 @@ import App, { type ArchitecturalPlan, type PropertyListing, type PublicService, 
 
 export const dynamic = "force-dynamic";
 
+const fallbackServices: PublicService[] = [
+  {
+    id: "fallback-demenagement-amenagement",
+    slug: "demenagement-amenagement",
+    title: "Déménagement & aménagement",
+    eyebrow: "Déménagement et organisation des espaces",
+    summary: "Un accompagnement pour préparer votre déménagement et aménager vos espaces selon vos besoins.",
+    body: "",
+    features: [],
+    media: [],
+  },
+  {
+    id: "fallback-cleaner",
+    slug: "cleaner",
+    title: "Cleaner",
+    eyebrow: "Service de nettoyage",
+    summary: "Un service de nettoyage pour vos logements et espaces professionnels.",
+    body: "",
+    features: [],
+    media: [],
+  },
+];
+
 async function loadPublishedContent(): Promise<{
   properties: PropertyListing[];
   plans: ArchitecturalPlan[];
@@ -27,7 +50,7 @@ async function loadPublishedContent(): Promise<{
   };
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-  if (!url || !key) return { properties: [], plans: [], settings: defaultSettings, services: [], error: true };
+  if (!url || !key) return { properties: [], plans: [], settings: defaultSettings, services: fallbackServices, error: true };
 
   const client = createClient(url, key, {
     auth: { autoRefreshToken: false, persistSession: false },
@@ -186,7 +209,7 @@ async function loadPublishedContent(): Promise<{
         mediaByService.set(asset.service_id, items);
       }
     }
-    const services: PublicService[] = (serviceResult.error ? [] : serviceResult.data ?? []).map((service) => ({
+    const services: PublicService[] = serviceResult.error ? fallbackServices : (serviceResult.data ?? []).map((service) => ({
       id: service.id,
       slug: service.slug,
       title: service.title,
@@ -198,7 +221,7 @@ async function loadPublishedContent(): Promise<{
     }));
     return { properties, plans, settings, services, error: false };
   } catch {
-    return { properties: [], plans: [], settings: defaultSettings, services: [], error: true };
+    return { properties: [], plans: [], settings: defaultSettings, services: fallbackServices, error: true };
   }
 }
 
