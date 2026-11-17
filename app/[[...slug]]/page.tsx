@@ -10,8 +10,12 @@ const fallbackServices: PublicService[] = [
     title: "Déménagement & aménagement",
     eyebrow: "Déménagement et organisation des espaces",
     summary: "Un accompagnement pour préparer votre déménagement et aménager vos espaces selon vos besoins.",
-    body: "",
-    features: [],
+    body: "DAFS Sarlu vous accompagne dans la préparation d’un déménagement et la réflexion autour de l’aménagement de vos espaces. Décrivez les lieux concernés, votre besoin et le résultat recherché afin que l’équipe puisse préciser avec vous le périmètre et les modalités de la demande.",
+    features: [
+      "Préparer l’organisation du déménagement selon le besoin communiqué.",
+      "Réfléchir à l’agencement du nouvel espace.",
+      "Préciser le périmètre et les modalités avec DAFS Sarlu.",
+    ],
     media: [],
   },
   {
@@ -20,8 +24,12 @@ const fallbackServices: PublicService[] = [
     title: "Cleaner",
     eyebrow: "Service de nettoyage",
     summary: "Un service de nettoyage pour vos logements et espaces professionnels.",
-    body: "",
-    features: [],
+    body: "Le service Cleaner concerne le nettoyage de logements et d’espaces professionnels. Indiquez le type d’espace, les surfaces concernées et votre besoin dans votre demande ; le périmètre et les modalités pourront ensuite être précisés avec DAFS Sarlu.",
+    features: [
+      "Nettoyage de logements.",
+      "Nettoyage d’espaces professionnels.",
+      "Périmètre et modalités définis avec l’équipe selon la demande.",
+    ],
     media: [],
   },
 ];
@@ -42,11 +50,11 @@ async function loadPublishedContent(): Promise<{
     whatsapp: "http://wa.me/243838755731",
     address: "Kinshasa, R.D. Congo.",
     about_title: "DAFS Sarlu | Immobilier et architecture",
-    about_content: "",
+    about_content: "DAFS Sarlu réunit des services immobiliers et d’accompagnement de projets : locations, biens à vendre, plans architecturaux, déménagement et aménagement, ainsi que le service Cleaner pour le nettoyage de logements et d’espaces professionnels.\n\nLe site présente les biens, plans et services publiés par l’équipe. Les informations détaillées d’un bien ou d’une prestation se confirment directement auprès de DAFS Sarlu avant toute décision.\n\nVous pouvez parcourir les offres disponibles, consulter les fiches de services et transmettre une demande depuis la page Contact.",
     faq_content: "",
-    legal_content: "",
-    home_title: "",
-    home_intro: "",
+    legal_content: "Éditeur du site : DAFS Sarlu.\n\nContact : dafssarlu@gmail.com · +243 838 755 731.\nAdresse indiquée : Kinshasa, R.D. Congo.\n\nLes informations d’immatriculation de l’entreprise, le responsable de publication et les coordonnées de l’hébergeur doivent être complétés par DAFS Sarlu.\n\nLes contenus concernant les biens et services sont publiés à titre informatif. Leur disponibilité, leurs caractéristiques et leurs modalités doivent être confirmées auprès de DAFS Sarlu. Toute estimation de construction communiquée après étude reste indicative et ne constitue pas un devis contractuel.",
+    home_title: "DAFS Sarlu\nAu service de vos projets",
+    home_intro: "Immobilier, plans architecturaux, déménagement, aménagement et nettoyage : découvrez les services DAFS Sarlu et échangez avec l’équipe autour de votre projet.",
   };
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -96,7 +104,7 @@ async function loadPublishedContent(): Promise<{
     ]);
 
     if (propertyResult.error || planResult.error || settingsResult.error) {
-      return { properties: [], plans: [], settings: defaultSettings, services: [], error: true };
+      return { properties: [], plans: [], settings: defaultSettings, services: fallbackServices, error: true };
     }
 
     const properties = (propertyResult.data ?? []).map((row: any) => {
@@ -180,18 +188,18 @@ async function loadPublishedContent(): Promise<{
     const values = (settingsResult.data?.settings ?? {}) as Record<string, unknown>;
     const settings: SiteSettings = {
       company_name: typeof values.company_name === "string" ? values.company_name : defaultSettings.company_name,
-      legal_name: typeof values.legal_name === "string" ? values.legal_name : "",
-      description: typeof values.description === "string" ? values.description : "",
-      email: typeof values.email === "string" ? values.email : "",
-      phone: typeof values.phone === "string" ? values.phone : "",
-      whatsapp: typeof values.whatsapp === "string" ? values.whatsapp : "",
-      address: typeof values.address === "string" ? values.address : "",
-      about_title: typeof values.about_title === "string" ? values.about_title : "",
-      about_content: typeof values.about_content === "string" ? values.about_content : "",
+      legal_name: typeof values.legal_name === "string" && values.legal_name ? values.legal_name : defaultSettings.legal_name,
+      description: typeof values.description === "string" && values.description ? values.description : defaultSettings.description,
+      email: typeof values.email === "string" && values.email ? values.email : defaultSettings.email,
+      phone: typeof values.phone === "string" && values.phone ? values.phone : defaultSettings.phone,
+      whatsapp: typeof values.whatsapp === "string" && values.whatsapp ? values.whatsapp : defaultSettings.whatsapp,
+      address: typeof values.address === "string" && values.address ? values.address : defaultSettings.address,
+      about_title: typeof values.about_title === "string" && values.about_title ? values.about_title : defaultSettings.about_title,
+      about_content: typeof values.about_content === "string" && values.about_content ? values.about_content : defaultSettings.about_content,
       faq_content: typeof values.faq_content === "string" ? values.faq_content : "",
-      legal_content: typeof values.legal_content === "string" ? values.legal_content : "",
-      home_title: typeof values.home_title === "string" ? values.home_title : "",
-      home_intro: typeof values.home_intro === "string" ? values.home_intro : "",
+      legal_content: typeof values.legal_content === "string" && values.legal_content ? values.legal_content : defaultSettings.legal_content,
+      home_title: typeof values.home_title === "string" && values.home_title ? values.home_title : defaultSettings.home_title,
+      home_intro: typeof values.home_intro === "string" && values.home_intro ? values.home_intro : defaultSettings.home_intro,
     };
     const mediaByService = new Map<string, ServiceMedia[]>();
     if (!mediaResult.error) {
@@ -209,14 +217,16 @@ async function loadPublishedContent(): Promise<{
         mediaByService.set(asset.service_id, items);
       }
     }
-    const services: PublicService[] = serviceResult.error ? fallbackServices : (serviceResult.data ?? []).map((service) => ({
+    const services: PublicService[] = serviceResult.error || !serviceResult.data?.length ? fallbackServices : serviceResult.data.map((service) => ({
       id: service.id,
       slug: service.slug,
       title: service.title,
       eyebrow: service.eyebrow ?? "",
       summary: service.summary ?? "",
-      body: service.body ?? "",
-      features: Array.isArray(service.features) ? service.features.filter((item): item is string => typeof item === "string") : [],
+      body: service.body?.trim() || fallbackServices.find((fallback) => fallback.slug === service.slug)?.body || "",
+      features: Array.isArray(service.features) && service.features.length
+        ? service.features.filter((item): item is string => typeof item === "string")
+        : fallbackServices.find((fallback) => fallback.slug === service.slug)?.features ?? [],
       media: mediaByService.get(service.id) ?? [],
     }));
     return { properties, plans, settings, services, error: false };

@@ -2700,6 +2700,35 @@ footer {
   line-height: 1.8;
 }
 
+.public-faq-list {
+  max-width: 880px;
+  margin: 0 auto 32px;
+  border-top: 1px solid #deddd8;
+}
+.public-faq-list details {
+  border-bottom: 1px solid #deddd8;
+  padding: 20px 4px;
+}
+.public-faq-list summary {
+  color: #14263d;
+  cursor: pointer;
+  font: 600 17px "Manrope", sans-serif;
+}
+.public-faq-list details p {
+  max-width: 760px;
+  margin: 14px 0 0;
+  color: #687386;
+  line-height: 1.8;
+}
+.estimate-request {
+  display: grid;
+  justify-items: start;
+  gap: 18px;
+}
+.estimate-request .editorial-page { min-height: 0; }
+.estimate-request h2 { color: #14263d; font: 700 25px "Manrope", sans-serif; }
+.contact-reachability { color: #687386; font-size: 13px; margin: -8px 0 18px; }
+
 .property-detail,
 .plan-detail {
   padding-block: 42px 80px;

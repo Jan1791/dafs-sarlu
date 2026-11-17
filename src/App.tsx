@@ -819,8 +819,7 @@ function HomePage({
             <span className="eyebrow">Votre projet en perspective</span>
             <h2>Obtenez une première estimation de construction.</h2>
             <p>
-              Configurez votre projet en quelques étapes et obtenez un aperçu indicatif, clair et
-              structuré.
+              Présentez votre projet à DAFS Sarlu pour préciser les informations nécessaires à son étude.
             </p>
           </div>
           <button className="btn navy" onClick={() => go("estimate")}>
@@ -829,28 +828,28 @@ function HomePage({
         </div>
       </section>
       <section className="section container">
-        <SectionHead eyebrow="L'exigence DAFS" title="Une approche fondée sur la confiance" />
+        <SectionHead eyebrow="Nos activités" title="Des services pour vos projets" />
         <div className="values-grid">
           {[
             [
               "shield",
-              "Sélection rigoureuse",
-              "Des informations structurées et des références cohérentes.",
+              "Immobilier",
+              "Locations et biens à vendre publiés par DAFS Sarlu.",
             ],
             [
               "ruler",
-              "Expertise transversale",
-              "Une lecture immobilière et architecturale de chaque projet.",
+              "Architecture",
+              "Des modèles de plans architecturaux à parcourir.",
             ],
             [
               "people",
-              "Accompagnement humain",
-              "Un contact direct, attentif et adapté à votre besoin.",
+              "Déménagement & aménagement",
+              "Un service pour préparer le déménagement et penser l’organisation des espaces.",
             ],
             [
               "sparkle",
-              "Expérience premium",
-              "Une démarche claire, de la découverte à la prise de contact.",
+              "Cleaner",
+              "Nettoyage de logements et d’espaces professionnels.",
             ],
           ].map(([icon, title, text]) => (
             <div className="value" key={title}>
@@ -937,6 +936,42 @@ function EditablePublicPage({
   );
 }
 
+function FAQPage({ content, go }: { content: string; go: (page: Page) => void }) {
+  const questions = [
+    ["Comment consulter les biens disponibles ?", "Parcourez les locations et les biens à vendre. Les fiches publiées présentent les informations communiquées par DAFS Sarlu. Contactez l’équipe avec la référence du bien pour vérifier sa disponibilité et ses modalités."],
+    ["Comment demander des précisions sur un bien ?", "Ouvrez sa fiche puis transmettez votre question depuis la page Contact. La disponibilité, le prix et les caractéristiques sont à confirmer auprès de DAFS Sarlu."],
+    ["Puis-je demander un plan architectural ?", "Consultez les modèles publiés dans la bibliothèque. Pour parler d’un besoin particulier ou d’une adaptation, choisissez « Plan architectural » dans le formulaire de contact."],
+    ["Comment obtenir une estimation de construction ?", "Décrivez votre projet depuis la page Estimation. L’équipe pourra préciser les informations nécessaires et la suite à donner. Toute estimation communiquée après étude reste indicative."],
+    ["Que couvrent les services Déménagement & aménagement et Cleaner ?", "Le service Déménagement & aménagement concerne la préparation d’un déménagement et l’organisation des espaces. Cleaner concerne le nettoyage de logements et d’espaces professionnels. Le périmètre se précise avec DAFS Sarlu selon votre demande."],
+    ["Comment contacter DAFS Sarlu ?", "Utilisez le formulaire de contact, écrivez à dafssarlu@gmail.com ou appelez le +243 838 755 731. Indiquez au moins un moyen de vous joindre dans le formulaire."],
+  ];
+  return <>
+    <PageHero eyebrow="Besoin d’un renseignement ?" title="Questions fréquentes" text="Quelques repères pour parcourir les offres et contacter DAFS Sarlu." />
+    <section className="section container">
+      {content.trim() ? (
+        <div className="editorial-page">{content.split(/\n\s*\n/).map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div>
+      ) : (
+        <div className="public-faq-list">{questions.map(([question, answer]) => <details key={question}><summary>{question}</summary><p>{answer}</p></details>)}</div>
+      )}
+      <button className="btn navy" onClick={() => go("contact")}>Poser une question <Icon name="arrow" /></button>
+    </section>
+  </>;
+}
+
+function EstimatePage({ onContact }: { onContact: () => void }) {
+  return <>
+    <PageHero eyebrow="Construction" title="Parlons de votre projet" text="Une estimation dépend des caractéristiques de votre projet et des paramètres étudiés par DAFS Sarlu." />
+    <section className="section container estimate-request">
+      <div className="editorial-page">
+        <h2>Demandez une étude indicative</h2>
+        <p>Transmettez les premières informations disponibles : type de construction, localisation, surface envisagée, niveau de finition souhaité et calendrier. L’équipe pourra vous préciser les éléments nécessaires pour étudier votre demande.</p>
+        <p>Le site ne publie pas de prix de construction préétablis. Toute estimation communiquée après étude est indicative et ne constitue pas un devis contractuel.</p>
+      </div>
+      <button className="btn navy" onClick={onContact}>Décrire mon projet <Icon name="arrow" /></button>
+    </section>
+  </>;
+}
+
 function CataloguePage({
   mode,
   go,
@@ -1019,7 +1054,7 @@ function CataloguePage({
   return (
     <>
       <PageHero
-        eyebrow={mode === "rentals" ? "Habiter autrement" : "Investir avec confiance"}
+          eyebrow={mode === "rentals" ? "Locations" : "Biens à vendre"}
         title={mode === "rentals" ? "Locations sélectionnées" : "Biens à vendre"}
         text={
           mode === "rentals"
@@ -1269,6 +1304,7 @@ function PlansPage({ go, plans, onSelectPlan }: { go: (p: Page) => void; plans: 
 }
 
 function ContactPage({ settings }: { settings: SiteSettings }) {
+  const searchParams = useSearchParams();
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
@@ -1283,6 +1319,11 @@ function ContactPage({ settings }: { settings: SiteSettings }) {
     setSent(false);
     setError("");
     const form = new FormData(formElement);
+    if (!String(form.get("phone") ?? "").trim() && !String(form.get("email") ?? "").trim()) {
+      setError("Indiquez un numéro de téléphone ou une adresse e-mail pour être recontacté.");
+      setSending(false);
+      return;
+    }
     const inquiryTypes: Record<string, string> = {
       "Location courte durée": "reservation",
       "Location longue durée": "property",
@@ -1333,11 +1374,12 @@ function ContactPage({ settings }: { settings: SiteSettings }) {
       <section className="contact-page container">
         <aside>
           <span className="eyebrow">Coordonnées</span>
-          <h2>Un échange direct et confidentiel.</h2>
+          <h2>Un échange direct autour de votre projet.</h2>
           <p>{settings.description || "Décrivez votre projet à l’équipe DAFS Sarlu."}</p>
           {settings.email && <a href={`mailto:${settings.email}`}>{settings.email}</a>}
-          {settings.phone && <p>{settings.phone}</p>}
+          {settings.phone && <a href={`tel:${settings.phone.replace(/[^+\d]/g, "")}`}>{settings.phone}</a>}
           {settings.address && <p>{settings.address}</p>}
+          {settings.whatsapp && <a href={settings.whatsapp} target="_blank" rel="noreferrer">Écrire sur WhatsApp</a>}
         </aside>
         <form
           className="contact-form"
@@ -1354,16 +1396,17 @@ function ContactPage({ settings }: { settings: SiteSettings }) {
             </label>
             <label>
               Téléphone
-              <input name="phone" required maxLength={30} type="tel" placeholder="Votre numéro" />
+              <input name="phone" maxLength={30} type="tel" placeholder="Votre numéro" />
             </label>
           </div>
           <label>
             Adresse e-mail
-            <input name="email" required maxLength={255} type="email" placeholder="vous@exemple.com" />
+            <input name="email" maxLength={255} type="email" placeholder="vous@exemple.com" />
           </label>
+          <p className="contact-reachability">Indiquez au moins un moyen de vous joindre : téléphone ou e-mail.</p>
           <label>
             Objet de votre demande
-            <select name="subject">
+            <select name="subject" defaultValue={searchParams.get("subject") || "Autre demande"}>
               <option>Location courte durée</option>
               <option>Location longue durée</option>
               <option>Achat immobilier</option>
@@ -1469,7 +1512,7 @@ function Cta({ go, whatsappHref }: { go: (p: Page) => void; whatsappHref: string
         <div>
           <span className="eyebrow">Un projet en tête ?</span>
           <h2>Parlons-en, simplement.</h2>
-          <p>Notre équipe vous accompagne pour trouver, choisir ou construire.</p>
+          <p>Présentez votre besoin en immobilier, en architecture, en déménagement, en aménagement ou en nettoyage.</p>
         </div>
         {whatsappHref ? (
           <a className="btn whatsapp" href={createWhatsAppHref(whatsappHref, "", "Bonjour DAFS Sarlu, je souhaite échanger au sujet de mon projet.")} target="_blank" rel="noreferrer">
@@ -1507,7 +1550,6 @@ function Footer({ go, settings }: { go: (p: Page) => void; settings: SiteSetting
           <button onClick={() => go("contact")}>Contact</button>
           <button onClick={() => go("faq")}>FAQ</button>
           <button onClick={() => go("legal")}>Mentions légales</button>
-          <button onClick={() => go("system")}>États système</button>
         </div>
         <div>
           <h4>Nous contacter</h4>
@@ -1785,15 +1827,13 @@ export default function App({
     "plan-detail": (
       selectedPlan ? <PlanDetailPage plan={selectedPlan} go={go} whatsappHref={whatsappHref} /> : <EmptyPublicPage title="Fiche plan architectural" description="Cette fiche sera disponible après la publication d’un plan." go={go} />
     ),
-    estimate: (
-      <EmptyPublicPage title="Estimation de construction" description="Le simulateur sera disponible après la configuration des modèles et barèmes dans l’administration." go={go} />
-    ),
+    estimate: <EstimatePage onContact={() => router.push(`${pagePaths.contact}?subject=${encodeURIComponent("Estimation de construction")}`)} />,
     "estimate-result": (
       <EmptyPublicPage title="Résultat d’estimation" description="Aucune estimation n’est disponible pour le moment." go={go} />
     ),
     about: <EditablePublicPage title={initialSettings.about_title || "À propos"} content={initialSettings.about_content} go={go} />,
     contact: <ContactPage settings={initialSettings} />,
-    faq: <EditablePublicPage title="Questions fréquentes" content={initialSettings.faq_content} go={go} />,
+    faq: <FAQPage content={initialSettings.faq_content} go={go} />,
     legal: <EditablePublicPage title="Informations légales" content={initialSettings.legal_content} go={go} />,
     system: <SystemPage go={go} />,
   };
