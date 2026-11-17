@@ -56,6 +56,26 @@ function pageFromPath(pathname: string): Page {
   );
 }
 
+function createWhatsAppHref(settings: Pick<SiteSettings, "whatsapp" | "phone">, message?: string) {
+  let href: URL | null = null;
+  const candidate = settings.whatsapp.trim();
+  if (candidate) {
+    try {
+      href = new URL(/^https?:\/\//i.test(candidate) ? candidate : `https://${candidate}`);
+      if (href.hostname === "wa.me" || href.hostname.endsWith(".wa.me")) href.protocol = "https:";
+    } catch {
+      href = null;
+    }
+  }
+  if (!href) {
+    const digits = settings.phone.replace(/\D/g, "");
+    if (digits) href = new URL(`https://wa.me/${digits}`);
+  }
+  if (!href) return "";
+  if (message) href.searchParams.set("text", message);
+  return href.toString();
+}
+
 type IconName =
   | "arrow"
   | "bed"
@@ -337,6 +357,22 @@ export type ArchitecturalPlan = { id: string; reference: string; name: string; m
 export type ServiceMedia = { id: string; title: string; description: string; url: string; alt: string; mimeType: string };
 export type PublicService = { id: string; slug: string; title: string; eyebrow: string; summary: string; body: string; features: string[]; media: ServiceMedia[] };
 
+export const starterPublicServices: PublicService[] = [
+  {
+    id: "fallback-demenagement-amenagement", slug: "demenagement-amenagement", title: "Déménagement & aménagement",
+    eyebrow: "Déménagement et organisation des espaces",
+    summary: "Un accompagnement pour préparer votre déménagement et aménager vos espaces selon vos besoins.",
+    body: "DAFS Sarlu propose un accompagnement pour organiser un déménagement et préparer l’installation dans un nouvel espace. Chaque demande commence par la compréhension des lieux concernés, du volume à déplacer, des dates souhaitées et du résultat attendu.\n\nSelon le périmètre retenu avec l’entreprise, le projet peut inclure la préparation logistique, le déplacement des biens, leur installation ou une réflexion sur l’agencement. Les tâches exactes, les moyens de transport et de manutention, les fournitures, les accès et les éventuelles exclusions doivent être confirmés avant toute intervention.\n\nPour l’aménagement, décrivez l’usage de la pièce, les meubles ou équipements concernés, les contraintes du lieu et vos priorités. DAFS Sarlu pourra préciser les options qu’elle est en mesure de prendre en charge, les délais possibles et les modalités de la prestation.",
+    features: ["Préparer l’organisation du déménagement selon le besoin communiqué.", "Étudier l’installation et l’agencement de l’espace selon le périmètre convenu.", "Confirmer les moyens, les dates, les tâches et le prix avant l’intervention."], media: [],
+  },
+  {
+    id: "fallback-cleaner", slug: "cleaner", title: "Cleaner", eyebrow: "Service de nettoyage",
+    summary: "Un service de nettoyage pour vos logements et espaces professionnels.",
+    body: "Le service Cleaner concerne le nettoyage de logements et d’espaces professionnels. Pour comprendre le besoin, indiquez le type de local, sa commune et son quartier, sa superficie approximative, son état actuel et les pièces ou zones à traiter.\n\nLa demande peut préciser les tâches recherchées — par exemple l’entretien courant ou un nettoyage plus approfondi — sans présumer que chaque option est disponible. DAFS Sarlu confirmera les tâches prises en charge, la fréquence possible, la durée estimée, les produits et équipements fournis ou à prévoir, ainsi que les conditions d’accès.\n\nAvant de convenir d’une intervention, faites préciser le périmètre, le calendrier, le prix et la personne responsable de l’ouverture ou de la remise des clés. Ces éléments permettent d’éviter les malentendus et d’établir une proposition adaptée au lieu.",
+    features: ["Nettoyage de logements et d’espaces professionnels.", "Périmètre, tâches et fréquence précisés selon chaque lieu.", "Produits, équipements, calendrier et prix confirmés avec DAFS Sarlu."], media: [],
+  },
+];
+
 function serviceIllustrationPath(slug: string) {
   const normalized = slug.toLowerCase();
   if (normalized.includes("clean") || normalized.includes("nettoyage")) {
@@ -409,7 +445,7 @@ function Logo({ light = false, onClick }: { light?: boolean; onClick?: () => voi
   );
 }
 
-function Header({ page, go }: { page: Page; go: (p: Page) => void }) {
+function Header({ page, go, whatsappHref }: { page: Page; go: (p: Page) => void; whatsappHref: string }) {
   const [open, setOpen] = useState(false);
   return (
     <header className="site-header">
@@ -427,9 +463,9 @@ function Header({ page, go }: { page: Page; go: (p: Page) => void }) {
             </button>
           ))}
         </nav>
-        <button className="contact-header" onClick={() => go("contact")}>
+        <a className="contact-header" href={whatsappHref || "#contact"} target={whatsappHref ? "_blank" : undefined} rel={whatsappHref ? "noreferrer" : undefined} onClick={!whatsappHref ? (event) => { event.preventDefault(); go("contact"); } : undefined}>
           <Icon name="chat" size={17} /> Nous contacter
-        </button>
+        </a>
         <button className="mobile-menu" onClick={() => setOpen(!open)} aria-label={open ? "Fermer le menu" : "Ouvrir le menu"} aria-expanded={open}>
           <Icon name={open ? "close" : "menu"} />
         </button>
@@ -520,7 +556,8 @@ function PlanCard({ item, onSelect }: { item: ArchitecturalPlan; onSelect: (item
   );
 }
 
-function PropertyDetailPage({ property, go }: { property: PropertyListing; go: (page: Page) => void }) {
+function PropertyDetailPage({ property, go, settings }: { property: PropertyListing; go: (page: Page) => void; settings: SiteSettings }) {
+  const enquiryLink = createWhatsAppHref(settings, `Bonjour DAFS Sarlu, je souhaite obtenir des informations sur le bien ${property.reference} — ${property.name}.`);
   const facts = [
     property.bedrooms !== null && property.bedrooms !== undefined ? [property.bedrooms, "Chambres"] : null,
     property.bathrooms !== null && property.bathrooms !== undefined ? [property.bathrooms, "Salles d’eau"] : null,
@@ -537,19 +574,20 @@ function PropertyDetailPage({ property, go }: { property: PropertyListing; go: (
       {facts.length > 0 && <div className="detail-facts">{facts.map(([value, label]) => <div key={label}><strong>{value}</strong><span>{label}</span></div>)}</div>}
       <div className="detail-content">
         <section><h2>À propos de ce bien</h2><p>{property.description || "La description détaillée de ce bien sera renseignée par DAFS Sarlu."}</p></section>
-        <aside><span className="eyebrow">Vous êtes intéressé ?</span><h2>{property.price}</h2><p>Contactez l’équipe pour obtenir plus d’informations ou organiser une visite.</p><button className="btn navy" onClick={() => go("contact")}>Demander des informations <Icon name="arrow" /></button></aside>
+        <aside><span className="eyebrow">Vous êtes intéressé ?</span><h2>{property.price}</h2><p>Contactez l’équipe pour obtenir plus d’informations ou organiser une visite.</p>{enquiryLink ? <a className="btn navy" href={enquiryLink} target="_blank" rel="noreferrer">Demander sur WhatsApp <Icon name="arrow" /></a> : <button className="btn navy" onClick={() => go("contact")}>Demander des informations <Icon name="arrow" /></button>}</aside>
       </div>
     </main>
   );
 }
 
-function PlanDetailPage({ plan, go }: { plan: ArchitecturalPlan; go: (page: Page) => void }) {
+function PlanDetailPage({ plan, go, settings }: { plan: ArchitecturalPlan; go: (page: Page) => void; settings: SiteSettings }) {
+  const enquiryLink = createWhatsAppHref(settings, `Bonjour DAFS Sarlu, je souhaite demander des informations sur le plan ${plan.reference} — ${plan.name}.`);
   return (
     <main className="plan-detail container">
       <div className="detail-breadcrumb"><button onClick={() => go("plans")}>Plans architecturaux</button><Icon name="chevron" size={15} /><span>{plan.reference}</span></div>
       <div className="plan-detail-grid">
         <div className="plan-detail-preview">{plan.image ? <img src={plan.image} alt={plan.name} /> : <div className="detail-gallery-empty"><Icon name="layers" size={36} /><span>Aucun aperçu fourni pour ce plan</span></div>}</div>
-        <section><span className="eyebrow">{plan.id} · {plan.category || "Plan architectural"}</span><h1>{plan.name}</h1><p className="plan-detail-meta">{plan.meta || "Caractéristiques à renseigner"}</p><p>{plan.description || "Contactez DAFS Sarlu pour obtenir des informations sur ce modèle."}</p><button className="btn navy" onClick={() => go("contact")}>Demander le plan complet <Icon name="arrow" /></button><small>Les fichiers originaux ne sont pas accessibles publiquement.</small></section>
+        <section><span className="eyebrow">{plan.id} · {plan.category || "Plan architectural"}</span><h1>{plan.name}</h1><p className="plan-detail-meta">{plan.meta || "Caractéristiques à renseigner"}</p><p>{plan.description || "Contactez DAFS Sarlu pour obtenir des informations sur ce modèle."}</p>{enquiryLink ? <a className="btn navy" href={enquiryLink} target="_blank" rel="noreferrer">Demander sur WhatsApp <Icon name="arrow" /></a> : <button className="btn navy" onClick={() => go("contact")}>Demander le plan complet <Icon name="arrow" /></button>}<small>Les fichiers originaux ne sont pas accessibles publiquement.</small></section>
       </div>
     </main>
   );
@@ -604,14 +642,26 @@ function ServicesDirectory({ services, onSelect }: { services: PublicService[]; 
   </>;
 }
 
-function PublicServicePage({ service, go }: { service: PublicService; go: (page: Page) => void }) {
+function PublicServicePage({ service, go, settings }: { service: PublicService; go: (page: Page) => void; settings: SiteSettings }) {
+  const whatsAppRequest = service.slug.includes("clean")
+    ? "Bonjour DAFS Sarlu, je souhaite demander des informations sur le service Cleaner."
+    : "Bonjour DAFS Sarlu, je souhaite demander des informations sur le déménagement et l’aménagement.";
   return <>
     <PageHero eyebrow={service.eyebrow || "Nos services"} title={service.title} text={service.summary} />
     <main className="container public-service-detail">
       <div className="public-service-intro">
         <div className="editorial-page">{service.body.split(/\n\s*\n/).filter(Boolean).map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div>
         {service.features.length > 0 && <section className="public-service-features"><span className="eyebrow">Notre accompagnement</span><ul>{service.features.map((feature) => <li key={feature}><Icon name="check" size={18} />{feature}</li>)}</ul></section>}
-        <button className="btn navy" onClick={() => go("contact")}>Demander ce service <Icon name="arrow" /></button>
+        <section className="service-next-steps">
+          <h2>Pour préparer votre demande</h2>
+          {service.slug.includes("clean") ? (
+            <ul><li>Précisez s’il s’agit d’un logement ou d’un espace professionnel.</li><li>Indiquez la commune, le quartier, la superficie approximative et l’état des lieux.</li><li>Décrivez les tâches souhaitées, la fréquence envisagée et la période qui vous convient.</li></ul>
+          ) : (
+            <ul><li>Indiquez les lieux de départ et d’arrivée, avec les communes ou quartiers concernés.</li><li>Décrivez le volume à déplacer et les meubles à démonter ou à installer.</li><li>Précisez les dates souhaitées, les accès et les contraintes connues.</li></ul>
+          )}
+          <p>Ces repères servent à mieux comprendre votre besoin. Le périmètre, les disponibilités, les moyens mobilisés et le prix sont à confirmer avec DAFS Sarlu avant toute intervention.</p>
+        </section>
+        <a className="btn navy" href={createWhatsAppHref(settings, whatsAppRequest)} target="_blank" rel="noreferrer">Demander ce service sur WhatsApp <Icon name="arrow" /></a>
       </div>
       {service.media.length > 0 ? (
         <section className="public-service-media" aria-label={`Médias : ${service.title}`}>
@@ -930,7 +980,7 @@ function HomePage({
           ))}
         </div>
       </section>
-      <Cta go={go} />
+      <Cta go={go} settings={settings} />
     </>
   );
 }
@@ -994,11 +1044,24 @@ function EditablePublicPage({
   if (!content.trim()) {
     return <EmptyPublicPage title={title} description="Cette page sera renseignée depuis l’espace d’administration." go={go} />;
   }
+  const sections = title.toLowerCase().includes("à propos") && content.includes("consulter les fiches de services et transmettre une demande depuis la page Contact")
+    ? [
+        ["Une entreprise tournée vers les projets et les espaces", "DAFS Sarlu réunit des activités immobilières, architecturales et des services pratiques liés aux espaces. Le site présente les biens, les modèles de plans et les prestations que l’entreprise choisit de publier. Chaque annonce et chaque demande doivent être confirmées directement auprès de l’équipe avant tout engagement."],
+        ["Immobilier", "L’offre immobilière couvre la location de logements et la vente de maisons, parcelles et autres biens publiés. Les informations de chaque fiche proviennent des données disponibles au moment de sa publication. Le prix, la disponibilité, les documents et les conditions doivent être vérifiés avec DAFS Sarlu."],
+        ["Architecture et construction", "La bibliothèque permet de découvrir des aperçus de modèles architecturaux. Une adaptation à un terrain ou à un programme précis nécessite un échange dédié. Une éventuelle estimation de construction dépend des plans, des surfaces, des matériaux, des finitions et du lieu ; elle reste indicative tant qu’un devis formel n’a pas été établi."],
+        ["Déménagement et aménagement", "DAFS Sarlu propose un accompagnement pour préparer un déménagement et organiser un espace. Le besoin peut concerner le transport, la manutention, l’installation ou la réflexion sur l’agencement, selon les moyens et le périmètre confirmés par l’entreprise pour chaque demande."],
+        ["Cleaner", "Le service Cleaner concerne le nettoyage de logements et d’espaces professionnels. Le type de nettoyage, les tâches, les produits ou équipements fournis, la fréquence et les zones desservies sont à préciser directement avec DAFS Sarlu."],
+        ["Notre façon de travailler", "Pour recevoir une réponse utile, décrivez le lieu, le service recherché, vos dates et vos coordonnées. L’équipe pourra alors confirmer si la demande entre dans son périmètre, recueillir les détails manquants et préciser les prochaines étapes."],
+      ]
+    : [];
   return (
     <>
       <PageHero eyebrow="DAFS Sarlu" title={title} text="" />
       <section className="section container editorial-page">
-        {content.split(/\n\s*\n/).map((paragraph, index) => <p key={index}>{paragraph}</p>)}
+        {sections.length ? <>
+          {content.split(/\n\s*\n/).map((paragraph, index) => <p className="about-intro-copy" key={index}>{paragraph}</p>)}
+          {sections.map(([heading, paragraph]) => <section className="about-copy-section" key={heading}><h2>{heading}</h2><p>{paragraph}</p></section>)}
+        </> : content.split(/\n\s*\n/).map((paragraph, index) => <p key={index}>{paragraph}</p>)}
       </section>
     </>
   );
@@ -1011,6 +1074,9 @@ function FAQPage({ content, go }: { content: string; go: (page: Page) => void })
     ["Puis-je demander un plan architectural ?", "Consultez les modèles publiés dans la bibliothèque. Pour parler d’un besoin particulier ou d’une adaptation, choisissez « Plan architectural » dans le formulaire de contact."],
     ["Comment obtenir une estimation de construction ?", "Décrivez votre projet depuis la page Estimation. L’équipe pourra préciser les informations nécessaires et la suite à donner. Toute estimation communiquée après étude reste indicative."],
     ["Que couvrent les services Déménagement & aménagement et Cleaner ?", "Le service Déménagement & aménagement concerne la préparation d’un déménagement et l’organisation des espaces. Cleaner concerne le nettoyage de logements et d’espaces professionnels. Le périmètre se précise avec DAFS Sarlu selon votre demande."],
+    ["Comment préparer une demande de déménagement ?", "Indiquez les lieux de départ et d’arrivée, la date souhaitée, le volume à transporter, les éléments à démonter et les contraintes d’accès. Ces informations aideront DAFS Sarlu à évaluer le périmètre de la prestation."],
+    ["Que faut-il préciser pour demander Cleaner ?", "Décrivez le type de lieu, la commune et le quartier, la superficie approximative, les tâches souhaitées et la fréquence. Confirmez avec DAFS Sarlu les produits, équipements, disponibilités et modalités."],
+    ["Les prix affichés sont-ils définitifs ?", "Les prix des biens sont ceux communiqués dans les annonces et doivent être confirmés auprès de DAFS Sarlu. Les tarifs des services et les estimations de construction sont à convenir après étude du besoin."],
     ["Comment contacter DAFS Sarlu ?", "Utilisez le formulaire de contact, écrivez à dafssarlu@gmail.com ou appelez le +243 838 755 731. Indiquez au moins un moyen de vous joindre dans le formulaire."],
   ];
   return <>
@@ -1447,6 +1513,7 @@ function ContactPage({ settings }: { settings: SiteSettings }) {
           {settings.email && <a href={`mailto:${settings.email}`}>{settings.email}</a>}
           {settings.phone && <a href={`tel:${settings.phone.replace(/[^+\d]/g, "")}`}>{settings.phone}</a>}
           {settings.address && <p>{settings.address}</p>}
+          {createWhatsAppHref(settings) && <a className="contact-whatsapp-link" href={createWhatsAppHref(settings)} target="_blank" rel="noreferrer">Nous écrire sur WhatsApp</a>}
         </aside>
         <form
           className="contact-form"
@@ -1572,7 +1639,7 @@ function SystemPage({ go }: { go: (p: Page) => void }) {
   );
 }
 
-function Cta({ go }: { go: (p: Page) => void }) {
+function Cta({ go, settings }: { go: (p: Page) => void; settings: SiteSettings }) {
   return (
     <section className="cta">
       <div className="container">
@@ -1581,9 +1648,9 @@ function Cta({ go }: { go: (p: Page) => void }) {
           <h2>Parlons-en, simplement.</h2>
           <p>Présentez votre besoin en immobilier, en architecture, en déménagement, en aménagement ou en nettoyage.</p>
         </div>
-        <button className="btn navy" onClick={() => go("contact")}>
+        <a className="btn navy" href={createWhatsAppHref(settings) || "#contact"} target={createWhatsAppHref(settings) ? "_blank" : undefined} rel={createWhatsAppHref(settings) ? "noreferrer" : undefined} onClick={!createWhatsAppHref(settings) ? (event) => { event.preventDefault(); go("contact"); } : undefined}>
           <Icon name="chat" /> Nous contacter
-        </button>
+        </a>
       </div>
     </section>
   );
@@ -1595,7 +1662,7 @@ function Footer({ go, settings }: { go: (p: Page) => void; settings: SiteSetting
       <div className="container footer-grid">
         <div>
           <Logo light onClick={() => go("home")} />
-          <p>{settings.description || "Plateforme immobilière et architecturale conçue pour simplifier vos projets."}</p>
+          <p>DAFS Sarlu présente des offres immobilières, des aperçus de plans architecturaux et des services de déménagement, d’aménagement et de nettoyage à Kinshasa.</p>
         </div>
         <div>
           <h4>Explorer</h4>
@@ -1615,6 +1682,7 @@ function Footer({ go, settings }: { go: (p: Page) => void; settings: SiteSetting
           <h4>Nous contacter</h4>
           {settings.email && <a href={`mailto:${settings.email}`}>{settings.email}</a>}
           {settings.phone && <a href={`tel:${settings.phone.replace(/[^+\d]/g, "")}`}>{settings.phone}</a>}
+          {createWhatsAppHref(settings) && <a href={createWhatsAppHref(settings)} target="_blank" rel="noreferrer">Nous écrire sur WhatsApp</a>}
           {settings.address && <p>{settings.address}</p>}
         </div>
       </div>
@@ -1755,6 +1823,7 @@ export default function App({
         client.from("media_assets").select("id, service_id, title, description, alt_text, mime_type, storage_path").eq("is_published", true).order("sort_order").order("created_at"),
       ]);
       if (!active || serviceResult.error || mediaResult.error) return;
+      if (!serviceResult.data?.length) return;
       const mediaByService = new Map<string, ServiceMedia[]>();
       for (const asset of mediaResult.data ?? []) {
         if (!asset.service_id) continue;
@@ -1769,16 +1838,21 @@ export default function App({
         });
         mediaByService.set(asset.service_id, list);
       }
-      setServices((serviceResult.data ?? []).map((service) => ({
+      setServices(serviceResult.data.map((service) => {
+        const starter = starterPublicServices.find((item) => item.slug === service.slug);
+        return ({
         id: service.id,
         slug: service.slug,
         title: service.title,
         eyebrow: service.eyebrow ?? "",
         summary: service.summary ?? "",
-        body: service.body ?? "",
-        features: Array.isArray(service.features) ? service.features.filter((item): item is string => typeof item === "string") : [],
+        body: service.body?.trim() || starter?.body || "",
+        features: Array.isArray(service.features) && service.features.length
+          ? service.features.filter((item): item is string => typeof item === "string")
+          : starter?.features ?? [],
         media: mediaByService.get(service.id) ?? [],
-      })));
+      });
+      }));
     };
     void loadPublishedServices();
     window.addEventListener("focus", loadPublishedServices);
@@ -1873,21 +1947,21 @@ export default function App({
     sales: <CataloguePage mode="sales" go={go} onSelectProperty={selectProperty} properties={properties} loading={propertiesLoading} loadError={propertiesLoadError} />,
     plans: <PlansPage go={go} plans={plans} onSelectPlan={selectPlan} />,
     services: <ServicesDirectory services={services} onSelect={selectService} />,
-    "service-detail": selectedService ? <PublicServicePage service={selectedService} go={go} /> : <ServicesDirectory services={services} onSelect={selectService} />,
+    "service-detail": selectedService ? <PublicServicePage service={selectedService} go={go} settings={initialSettings} /> : <ServicesDirectory services={services} onSelect={selectService} />,
     detail: (
-      selectedProperty ? <PropertyDetailPage property={selectedProperty} go={go} /> : <EmptyPublicPage title="Fiche logement" description="Cette fiche sera disponible après la publication d’un logement." go={go} />
+      selectedProperty ? <PropertyDetailPage property={selectedProperty} go={go} settings={initialSettings} /> : <EmptyPublicPage title="Fiche logement" description="Cette fiche sera disponible après la publication d’un logement." go={go} />
     ),
     "long-detail": (
-      selectedProperty ? <PropertyDetailPage property={selectedProperty} go={go} /> : <EmptyPublicPage title="Fiche location" description="Cette fiche sera disponible après la publication d’un logement." go={go} />
+      selectedProperty ? <PropertyDetailPage property={selectedProperty} go={go} settings={initialSettings} /> : <EmptyPublicPage title="Fiche location" description="Cette fiche sera disponible après la publication d’un logement." go={go} />
     ),
     "house-detail": (
-      selectedProperty ? <PropertyDetailPage property={selectedProperty} go={go} /> : <EmptyPublicPage title="Fiche maison" description="Cette fiche sera disponible après la publication d’un bien." go={go} />
+      selectedProperty ? <PropertyDetailPage property={selectedProperty} go={go} settings={initialSettings} /> : <EmptyPublicPage title="Fiche maison" description="Cette fiche sera disponible après la publication d’un bien." go={go} />
     ),
     "land-detail": (
-      selectedProperty ? <PropertyDetailPage property={selectedProperty} go={go} /> : <EmptyPublicPage title="Fiche parcelle" description="Cette fiche sera disponible après la publication d’un bien." go={go} />
+      selectedProperty ? <PropertyDetailPage property={selectedProperty} go={go} settings={initialSettings} /> : <EmptyPublicPage title="Fiche parcelle" description="Cette fiche sera disponible après la publication d’un bien." go={go} />
     ),
     "plan-detail": (
-      selectedPlan ? <PlanDetailPage plan={selectedPlan} go={go} /> : <EmptyPublicPage title="Fiche plan architectural" description="Cette fiche sera disponible après la publication d’un plan." go={go} />
+      selectedPlan ? <PlanDetailPage plan={selectedPlan} go={go} settings={initialSettings} /> : <EmptyPublicPage title="Fiche plan architectural" description="Cette fiche sera disponible après la publication d’un plan." go={go} />
     ),
     estimate: <EstimatePage onContact={() => router.push(`${pagePaths.contact}?subject=${encodeURIComponent("Estimation de construction")}`)} />,
     "estimate-result": (
@@ -1901,7 +1975,7 @@ export default function App({
   };
   return (
     <div className="app">
-      <Header page={page} go={go} />
+      <Header page={page} go={go} whatsappHref={createWhatsAppHref(initialSettings)} />
       {content[page]}
       <Footer go={go} settings={initialSettings} />
       {page !== "contact" && <button className="float-contact" onClick={() => go("contact")} aria-label="Contacter DAFS Sarlu"><Icon name="chat" /></button>}

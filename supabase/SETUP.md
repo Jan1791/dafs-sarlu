@@ -11,6 +11,9 @@ Dans le tableau de bord Supabase, ouvrir **SQL Editor** et exécuter les fichier
 3. `migrations/202611150003_site_settings.sql` crée les coordonnées et informations d’entreprise modifiables depuis l’admin.
 4. `migrations/202611150004_data_integrity.sql` synchronise les dates de modification et limite les champs de profil modifiables.
 5. `migrations/202611170001_services_media.sql` ajoute les pages de services, la bibliothèque de médias et le bucket public `site-media` avec des droits d’écriture réservés aux administrateurs.
+6. `migrations/202611170002_public_service_content.sql` ajoute les textes publics de départ sans écraser les champs déjà renseignés.
+7. `migrations/202611170003_kinshasa_property_seed.sql` importe les quatre annonces et leurs médias fournis dans `public/property-media`.
+8. `migrations/202611170004_expand_public_service_copy.sql` développe les textes initiaux de Déménagement & aménagement et Cleaner en conservant les versions déjà modifiées dans l’admin.
 
 ## Créer le premier compte administrateur
 
@@ -40,6 +43,8 @@ Le client public lit uniquement les propriétés publiées. La création, la mod
 ## Services et bibliothèque de médias
 
 Après les quatre migrations initiales, exécuter la migration `202611170001_services_media.sql`. Elle crée les pages « Déménagement & aménagement » et « Cleaner », toutes deux publiées avec un texte de départ modifiable dans l’admin. La bibliothèque permet d’importer plusieurs fichiers ou un dossier complet, de reclasser chaque média, de l’associer à une page et de choisir s’il est public. Les vidéos sont transférées par blocs afin de reprendre plus fiablement les imports interrompus.
+
+Pour les migrations de contenu ajoutées par la suite, exécuter chaque fichier numéroté suivant une seule fois et dans l’ordre. Le texte affiché par le site reste modifiable dans l’espace admin après l’application des migrations.
 
 Les médias locaux de `src/img` ne sont pas dans Git et ne sont pas automatiquement présents dans Supabase. Depuis **Admin → Services & médias → Bibliothèque médias**, sélectionnez le dossier `src/img` pour importer son contenu. `AMENAGEMENT`, `CONSTRUCTION`, `PLAN-3D` et `LOGO` sont classés à partir de leurs noms de dossier ; vérifiez chaque fiche et sa visibilité avant publication. Le lot fourni comprend environ 192 Mo : l’import dépend aussi de l’espace Storage disponible dans le projet.
 

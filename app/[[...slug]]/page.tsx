@@ -1,38 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
-import App, { starterProperties, type ArchitecturalPlan, type PropertyListing, type PublicService, type ServiceMedia, type SiteSettings } from "../../src/App";
+import App, { starterProperties, starterPublicServices, type ArchitecturalPlan, type PropertyListing, type PublicService, type ServiceMedia, type SiteSettings } from "../../src/App";
 
 export const dynamic = "force-dynamic";
 
-const fallbackServices: PublicService[] = [
-  {
-    id: "fallback-demenagement-amenagement",
-    slug: "demenagement-amenagement",
-    title: "Déménagement & aménagement",
-    eyebrow: "Déménagement et organisation des espaces",
-    summary: "Un accompagnement pour préparer votre déménagement et aménager vos espaces selon vos besoins.",
-    body: "DAFS Sarlu vous accompagne dans la préparation d’un déménagement et la réflexion autour de l’aménagement de vos espaces. Décrivez les lieux concernés, votre besoin et le résultat recherché afin que l’équipe puisse préciser avec vous le périmètre et les modalités de la demande.",
-    features: [
-      "Préparer l’organisation du déménagement selon le besoin communiqué.",
-      "Réfléchir à l’agencement du nouvel espace.",
-      "Préciser le périmètre et les modalités avec DAFS Sarlu.",
-    ],
-    media: [],
-  },
-  {
-    id: "fallback-cleaner",
-    slug: "cleaner",
-    title: "Cleaner",
-    eyebrow: "Service de nettoyage",
-    summary: "Un service de nettoyage pour vos logements et espaces professionnels.",
-    body: "Le service Cleaner concerne le nettoyage de logements et d’espaces professionnels. Indiquez le type d’espace, les surfaces concernées et votre besoin dans votre demande ; le périmètre et les modalités pourront ensuite être précisés avec DAFS Sarlu.",
-    features: [
-      "Nettoyage de logements.",
-      "Nettoyage d’espaces professionnels.",
-      "Périmètre et modalités définis avec l’équipe selon la demande.",
-    ],
-    media: [],
-  },
-];
+const fallbackServices = starterPublicServices;
 
 async function loadPublishedContent(): Promise<{
   properties: PropertyListing[];
