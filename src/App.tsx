@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import { supabase } from "./lib/supabase";
+import { ExclusiveVideo } from "./media";
 
 type Page =
   | "home"
@@ -788,7 +789,7 @@ function PropertyDetailPage({ property, go, settings }: { property: PropertyList
       <div className="detail-breadcrumb"><button onClick={() => go("home")}>Accueil</button><Icon name="chevron" size={15} /><span>{property.type}</span></div>
       <div className="detail-heading"><div><span className="eyebrow">{property.reference} · {property.type}</span><h1>{property.name}</h1><p><Icon name="map" size={16} /> {property.city || property.address || "Localisation à confirmer"}</p>{property.address && <p className="detail-address">Adresse ou repère : {property.address}</p>}</div><strong>{property.price}</strong></div>
       <div className="detail-gallery">
-        {property.images.length ? property.images.map((image, index) => <figure key={image.src} className={index === 0 ? "detail-gallery-main" : ""}>{image.mimeType?.startsWith("video/") ? <video controls preload="metadata" poster={property.image} src={image.src} aria-label={image.alt || property.name} /> : <img src={image.src} alt={image.alt || property.name} />}{image.caption && <figcaption>{image.caption}</figcaption>}</figure>) : <div className="detail-gallery-empty"><Icon name="building" size={36} /><span>Aucun visuel fourni pour ce bien</span></div>}
+        {property.images.length ? property.images.map((image, index) => <figure key={image.src} className={index === 0 ? "detail-gallery-main" : ""}>{image.mimeType?.startsWith("video/") ? <ExclusiveVideo controls preload="metadata" poster={property.image} src={image.src} aria-label={image.alt || property.name} /> : <img src={image.src} alt={image.alt || property.name} />}{image.caption && <figcaption>{image.caption}</figcaption>}</figure>) : <div className="detail-gallery-empty"><Icon name="building" size={36} /><span>Aucun visuel fourni pour ce bien</span></div>}
       </div>
       {facts.length > 0 && <div className="detail-facts">{facts.map(([value, label]) => <div key={label}><strong>{value}</strong><span>{label}</span></div>)}</div>}
       <div className="detail-content">
@@ -901,7 +902,7 @@ function PublicServicePage({ service, go, settings }: { service: PublicService; 
           {service.media.map((asset) =>
             asset.mimeType.startsWith("video/") ? (
               <figure key={asset.id}>
-                <video controls preload="none" src={asset.url} poster={asset.poster} aria-label={asset.title} />
+                <ExclusiveVideo controls preload="none" src={asset.url} poster={asset.poster} aria-label={asset.title} />
                 <figcaption>{asset.description || asset.title}</figcaption>
               </figure>
             ) : (
@@ -1711,7 +1712,7 @@ function ConstructionPage({ media, managed }: { media: PublicConstructionMedia[]
               <img className="construction-cover" src={group.cover} alt={group.title} loading="lazy" />
               <div className="construction-group-copy"><span className="eyebrow">{group.videos.length} séquences vidéo{group.photos.length ? ` · ${group.photos.length} photo${group.photos.length > 1 ? "s" : ""}` : ""}</span><h2>{group.title}</h2><p>{group.description}</p></div>
               {group.photos.length > 0 && <div className="construction-photos">{group.photos.map((photo) => <figure key={photo.src}><img src={photo.src} alt={photo.alt} loading="lazy" /></figure>)}</div>}
-              {!!group.videos.length && <details className="construction-video-details"><summary>Parcourir les {group.videos.length} séquences vidéo</summary><div className="construction-video-grid">{group.videos.map((video) => <figure key={video.src}><video controls preload="none" playsInline poster={group.cover}><source src={video.src} type="video/mp4" />Votre navigateur ne prend pas en charge la lecture vidéo.</video><figcaption>{video.title}</figcaption></figure>)}</div></details>}
+              {!!group.videos.length && <details className="construction-video-details"><summary>Parcourir les {group.videos.length} séquences vidéo</summary><div className="construction-video-grid">{group.videos.map((video) => <figure key={video.src}><ExclusiveVideo controls preload="none" playsInline poster={group.cover}><source src={video.src} type="video/mp4" />Votre navigateur ne prend pas en charge la lecture vidéo.</ExclusiveVideo><figcaption>{video.title}</figcaption></figure>)}</div></details>}
             </article>
           ))}
           {!groups.length && <PublishedContentEmpty title="Aucun média publié dans cette galerie" description="L’équipe ajoutera et publiera les photos et vidéos depuis l’espace d’administration." />}

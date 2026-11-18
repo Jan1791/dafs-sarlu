@@ -5,6 +5,7 @@ import { Upload as TusUpload } from "tus-js-client";
 import { Check, Eye, EyeOff, Film, Image as ImageIcon, LoaderCircle, Pencil, Plus, Trash2, UploadCloud, X } from "lucide-react";
 import { supabase } from "./lib/supabase";
 import { getLocalMediaUrl } from "./media-url";
+import { ExclusiveVideo } from "./media";
 
 type ServicePage = {
   id: string;
@@ -444,7 +445,7 @@ export default function SiteContentPage() {
                   : supabase?.storage.from("site-media").getPublicUrl(asset.storage_path).data.publicUrl ?? "";
                 const video = asset.mime_type.startsWith("video/");
                 return <article className="panel media-admin-card" key={asset.id}>
-                  <div className="media-preview">{video ? <video src={url} controls preload="metadata" /> : <img src={url} alt={asset.alt_text || asset.title} loading="lazy" />}{video && <span><Film size={14} /> Vidéo</span>}</div>
+                  <div className="media-preview">{video ? <ExclusiveVideo src={url} controls preload="metadata" /> : <img src={url} alt={asset.alt_text || asset.title} loading="lazy" />}{video && <span><Film size={14} /> Vidéo</span>}</div>
                   <div className="media-card-body">
                     <input aria-label="Titre du média" defaultValue={asset.title} onBlur={(event) => { if (event.target.value !== asset.title) void updateAsset(asset, { title: event.target.value }); }} />
                     <input aria-label="Texte alternatif" placeholder="Description pour les lecteurs d’écran" defaultValue={asset.alt_text} onBlur={(event) => { if (event.target.value !== asset.alt_text) void updateAsset(asset, { alt_text: event.target.value }); }} />

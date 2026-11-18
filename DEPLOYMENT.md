@@ -4,7 +4,7 @@ Le dépôt contient deux applications Next.js indépendantes, prévues pour deux
 
 ## 1. Activer Supabase
 
-Dans le SQL Editor du projet Supabase, exécuter dans l’ordre les quatre fichiers sous `supabase/migrations/`. Le mot de passe PostgreSQL n’est pas nécessaire pour cette méthode.
+Dans le SQL Editor du projet Supabase, exécuter dans l’ordre les migrations sous `supabase/migrations/`. Lire `supabase/SETUP.md` pour l’ordre à jour, y compris les migrations 13 et 14 pour la galerie de plans, Construction et l’import des médias.
 
 Ensuite, suivre la section « Créer le premier compte administrateur » de `supabase/SETUP.md`.
 
@@ -40,7 +40,17 @@ Déploiement admin — Root Directory `admin` :
 
 Vercel détecte les applications Next.js et utilise les scripts `build` présents dans chaque `package.json`.
 
-## 4. Finaliser les domaines et l’authentification
+## 4. Installer les applications
+
+Le site et l’admin disposent chacun d’un manifeste PWA indépendant, d’icônes dérivées du logo DAFS et d’un service worker. Le bouton **Installer l’application** est visible en bas à droite lorsque l’application n’est pas déjà installée. Sur les navigateurs qui n’affichent pas la boîte d’installation, il ouvre les instructions adaptées. Les deux domaines doivent être servis en HTTPS.
+
+- Android / Chrome : toucher le bouton d’installation ou choisir « Installer l’application » dans le menu du navigateur.
+- iPhone et iPad / Safari : partager la page, choisir « Sur l’écran d’accueil », puis activer « Ouvrir comme app » si l’option est proposée.
+- Ordinateur / Chrome, Edge ou Safari compatible : utiliser le bouton d’installation ou la commande « Installer / Ajouter au Dock » du navigateur.
+
+Le site public peut être consulté hors ligne seulement pour les ressources statiques déjà mises en cache. L’admin a besoin d’Internet pour Supabase, la connexion, les annonces et les imports médias; sa page hors connexion l’indique.
+
+## 5. Finaliser les domaines et l’authentification
 
 - Ajouter les domaines définitifs au widget Turnstile.
 - Dans Supabase **Authentication → URL Configuration**, définir l’URL du projet admin et ses URL de redirection de production.
@@ -52,3 +62,13 @@ Vercel détecte les applications Next.js et utilise les scripts `build` présent
 L’admin gère les annonces (édition, photo principale et suppression complète), les plans, les demandes entrantes, les pages de services et la bibliothèque d’images/vidéos. Les informations éditoriales de base (accueil, présentation, FAQ, mentions légales, coordonnées) se règlent dans Paramètres. Les barèmes/simulateur, gestion des comptes depuis l’interface, rapports et réservations détaillées restent à construire à partir des règles métier validées par DAFS Sarlu.
 
 Les aperçus publics de plans sont pris dans le bucket public ; les fichiers originaux restent privés.
+
+## Liste de livraison
+
+Avant le transfert au client, valider avec lui les points suivants :
+
+1. Toutes les migrations Supabase jusqu’à `202611180003` sont appliquées et l’import **Importer les médias du projet** est terminé dans l’admin.
+2. Les deux URL Vercel définitives, les variables d’environnement, Turnstile, les redirections Auth et l’envoi/récupération de mot de passe sont vérifiés.
+3. Faire une recette navigateur/mobile : formulaires de contact avec CAPTCHA, navigation et galeries, publication/retrait d’un média, modification d’annonce/plan et affichage public, puis installation des deux PWA.
+4. Le client confirme les prix, descriptions et informations légales, les visuels autorisés à publier, ainsi que les options de nettoyage réellement proposées.
+5. Valider séparément les futures fonctionnalités encore non implémentées : comptes/rôles pilotés par l’interface, demandes de réservation/visites, simulateur de devis et rapports. Elles nécessitent des règles métier du client et ne bloquent pas la livraison du périmètre déjà opérationnel.

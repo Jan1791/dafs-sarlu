@@ -70,6 +70,47 @@ textarea:focus-visible {
   position: relative;
   z-index: 50;
 }
+.install-app-button {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid #c6a46a;
+  border-radius: 999px;
+  color: #14263d;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+.pwa-install-floating {
+  position: fixed;
+  z-index: 80;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  box-shadow: 0 8px 24px rgb(20 38 61 / 18%);
+}
+.pwa-help-backdrop {
+  position: fixed;
+  z-index: 200;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(9 24 40 / 58%);
+}
+.pwa-help-dialog {
+  position: relative;
+  width: min(100%, 400px);
+  padding: 30px;
+  border-radius: 16px;
+  color: #14263d;
+  background: #fff;
+  box-shadow: 0 24px 80px rgb(0 0 0 / 20%);
+  text-align: center;
+}
+.pwa-help-dialog img { margin: 0 auto 14px; border-radius: 13px; }
+.pwa-help-dialog h2 { margin: 0 0 10px; font: 700 22px/1.25 "Manrope", sans-serif; }
+.pwa-help-dialog p { color: #687386; font-size: 14px; line-height: 1.65; }
+.pwa-help-close { position: absolute; top: 10px; right: 13px; border: 0; color: #687386; background: transparent; font-size: 26px; }
+.install-app-confirm { min-height: 42px; margin-top: 8px; padding: 0 22px; border: 0; border-radius: 8px; color: white; background: #14263d; font-weight: 600; }
 .header-inner {
   height: 100%;
   display: flex;
