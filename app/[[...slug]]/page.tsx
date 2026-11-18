@@ -17,15 +17,15 @@ async function loadPublishedContent(): Promise<{
     legal_name: "DAFS Sarlu",
     description: "Locations, maisons et parcelles à vendre, plans architecturaux, déménagement, aménagement et nettoyage proposés par DAFS Sarlu.",
     email: "dafssarlu@gmail.com",
-    phone: "",
-    whatsapp: "",
+    phone: "+243 839 459 906",
+    whatsapp: "http://wa.me/243839459906",
     address: "Kinshasa, République démocratique du Congo",
     about_title: "À propos de DAFS Sarlu",
     about_content: "DAFS Sarlu réunit des services immobiliers et d’accompagnement de projets : locations, biens à vendre, plans architecturaux, déménagement et aménagement, ainsi que le service Cleaner pour le nettoyage de logements et d’espaces professionnels.\n\nLe site présente les biens, plans et services publiés par l’équipe. Les informations détaillées d’un bien ou d’une prestation se confirment directement auprès de DAFS Sarlu avant toute décision.\n\nVous pouvez parcourir les offres disponibles, consulter les fiches de services et transmettre une demande depuis la page Contact.\n\nDAFS Sarlu a été créée en (année de création). L’entreprise est portée par (nom ou présentation du fondateur et de l’équipe) et s’appuie sur (expérience, compétences ou partenariats à préciser).\n\nNotre mission est de (mission de l’entreprise à compléter). Notre vision pour les prochaines années est de (ambition ou vision à compléter).\n\nDAFS Sarlu intervient à Kinshasa, notamment à (communes et quartiers effectivement desservis). Pour une demande située ailleurs, l’équipe confirme au cas par cas sa capacité à intervenir.\n\nPour chaque demande, nous nous engageons à (engagements vérifiables à préciser : délais de réponse, suivi, qualité ou transparence). Les modalités, les délais et le périmètre sont confirmés avant le démarrage de toute prestation.",
     faq_content: "",
     legal_content: "Éditeur du site : DAFS Sarlu.\n\nContact : dafssarlu@gmail.com.\nAdresse indiquée : Kinshasa, R.D. Congo.\n\nLes informations d’immatriculation de l’entreprise, le responsable de publication et les coordonnées de l’hébergeur doivent être complétés par DAFS Sarlu.\n\nLes contenus concernant les biens et services sont publiés à titre informatif. Leur disponibilité, leurs caractéristiques et leurs modalités doivent être confirmées auprès de DAFS Sarlu. Toute estimation de construction communiquée après étude reste indicative et ne constitue pas un devis contractuel.",
-    home_title: "DAFS Sarlu, Agence immobilière\nau service de vos projets.",
-    home_intro: "Immobilier, plans architecturaux, déménagement, aménagement et nettoyage : découvrez les services DAFS Sarlu et échangez avec l’équipe autour de votre projet.",
+    home_title: "DAFS Sarlu,\nAgence immobilière au service de vos projets.",
+    home_intro: "Agence Immobilière, plans architecturaux, déménagement, aménagement et nettoyage : découvrez les services DAFS Sarlu et échangez avec l’équipe autour de votre projet.",
   };
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
