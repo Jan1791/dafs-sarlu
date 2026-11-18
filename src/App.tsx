@@ -10,6 +10,7 @@ type Page =
   | "rentals"
   | "sales"
   | "plans"
+  | "construction"
   | "detail"
   | "long-detail"
   | "house-detail"
@@ -30,6 +31,7 @@ const pagePaths: Record<Page, string> = {
   rentals: "/locations",
   sales: "/acheter",
   plans: "/plans-architecturaux",
+  construction: "/realisations-construction",
   detail: "/locations/courte-duree/fiche",
   "long-detail": "/locations/longue-duree/fiche",
   "house-detail": "/biens-a-vendre/fiche",
@@ -50,6 +52,7 @@ function pageFromPath(pathname: string): Page {
   const normalizedPath = pathname.replace(/\/+$/, "") || "/";
   if (normalizedPath === "/maisons-a-vendre/fiche") return "house-detail";
   if (normalizedPath.startsWith("/services/")) return "service-detail";
+  if (normalizedPath === pagePaths.construction) return "construction";
   return (
     (Object.entries(pagePaths).find(([, path]) => path === normalizedPath)?.[0] as Page) ??
     "system"
@@ -477,7 +480,7 @@ function propertyTarget(type: string): Page {
   return "detail";
 }
 
-export type ArchitecturalPlan = { id: string; reference: string; name: string; meta: string; image: string; description: string; category: string };
+export type ArchitecturalPlan = { id: string; reference: string; name: string; meta: string; image: string; gallery?: string[]; description: string; category: string };
 export type ServiceMedia = { id: string; title: string; description: string; url: string; alt: string; mimeType: string; poster?: string };
 export type PublicService = { id: string; slug: string; title: string; eyebrow: string; summary: string; body: string; features: string[]; media: ServiceMedia[] };
 
@@ -506,6 +509,71 @@ const movingServiceMedia: ServiceMedia[] = [
     };
   }),
 ];
+
+
+
+const planGallery = (folder: string, total: number) =>
+  Array.from({ length: total }, (_, index) => `/plans/${folder}/vue-${String(index + 1).padStart(2, "0")}.jpg`);
+
+export const starterPlans: ArchitecturalPlan[] = [
+  {
+    id: "starter-plan-immeuble",
+    reference: "DAFS-PLN-001",
+    name: "Immeuble contemporain",
+    category: "Immeuble résidentiel",
+    meta: "Perspectives 3D · caractéristiques à confirmer",
+    image: "/plans/immeuble-contemporain/vue-03.jpg",
+    gallery: planGallery("immeuble-contemporain", 12),
+    description: "Un dossier de perspectives 3D présentant un immeuble contemporain à plusieurs niveaux, avec balcons et espaces de stationnement visibles. Le nombre de logements, les surfaces, le programme, les plans techniques et les possibilités d’adaptation sont à confirmer avec DAFS Sarlu.",
+  },
+  {
+    id: "starter-plan-maison",
+    reference: "DAFS-PLN-002",
+    name: "Maison contemporaine à étage",
+    category: "Maison contemporaine",
+    meta: "Perspectives 3D · caractéristiques à confirmer",
+    image: "/plans/maison-contemporaine/vue-01.jpg",
+    gallery: planGallery("maison-contemporaine", 8),
+    description: "Un ensemble de vues 3D autour d’une maison contemporaine à étage. Les pièces, les dimensions, les matériaux, le coût indicatif et la conformité au terrain doivent être étudiés avant tout projet.",
+  },
+];
+
+type ConstructionGroup = {
+  title: string;
+  description: string;
+  cover: string;
+  photos: { src: string; alt: string }[];
+  videos: string[];
+};
+
+const constructionGroups: ConstructionGroup[] = [
+  {
+    title: "Fondations et ferraillage",
+    description: "Séquences visuelles autour du terrassement, des armatures et des travaux de fondation.",
+    cover: "/construction-media/photos/soudure-armature.jpg",
+    photos: [
+      { src: "/construction-media/photos/soudure-armature.jpg", alt: "Travail de soudure sur une armature métallique" },
+      { src: "/construction-media/photos/armature-metal.jpg", alt: "Armature métallique préparée pour un chantier" },
+    ],
+    videos: Array.from({ length: 9 }, (_, index) => `/construction-media/fondations/sequence-${String(index + 1).padStart(2, "0")}.mp4`),
+  },
+  {
+    title: "Armatures et structure",
+    description: "Vues de ferraillage, de préparation des éléments porteurs et de travaux de structure.",
+    cover: "/construction-media/posters/structure.jpg",
+    photos: [],
+    videos: Array.from({ length: 14 }, (_, index) => `/construction-media/structure/sequence-${String(index + 1).padStart(2, "0")}.mp4`),
+  },
+  {
+    title: "Travaux sur site",
+    description: "Séquences complémentaires montrant des interventions sur chantier et une équipe en tenue de travail.",
+    cover: "/construction-media/photos/equipe-chantier.jpg",
+    photos: [{ src: "/construction-media/photos/equipe-chantier.jpg", alt: "Équipe réunie sur un chantier" }],
+    videos: Array.from({ length: 10 }, (_, index) => `/construction-media/chantier/sequence-${String(index + 1).padStart(2, "0")}.mp4`),
+  },
+];
+
+const constructionAttributionNote = "Médias transmis à DAFS Sarlu. Le lieu, le mandat, les dates et l’attribution de chaque séquence sont à confirmer avec l’entreprise avant toute présentation comme référence client.";
 
 export const starterPublicServices: PublicService[] = [
   {
@@ -736,8 +804,17 @@ function PlanDetailPage({ plan, go, settings }: { plan: ArchitecturalPlan; go: (
     <main className="plan-detail container">
       <div className="detail-breadcrumb"><button onClick={() => go("plans")}>Plans architecturaux</button><Icon name="chevron" size={15} /><span>{plan.reference}</span></div>
       <div className="plan-detail-grid">
-        <div className="plan-detail-preview">{plan.image ? <img src={plan.image} alt={plan.name} /> : <div className="detail-gallery-empty"><Icon name="layers" size={36} /><span>Aucun aperçu fourni pour ce plan</span></div>}</div>
-        <section><span className="eyebrow">{plan.id} · {plan.category || "Plan architectural"}</span><h1>{plan.name}</h1><p className="plan-detail-meta">{plan.meta || "Caractéristiques à renseigner"}</p><p>{plan.description || "Contactez DAFS Sarlu pour obtenir des informations sur ce modèle."}</p>{enquiryLink ? <a className="btn navy" href={enquiryLink} target="_blank" rel="noreferrer">Demander sur WhatsApp <Icon name="arrow" /></a> : <button className="btn navy" onClick={() => go("contact")}>Demander le plan complet <Icon name="arrow" /></button>}<small>Les fichiers originaux ne sont pas accessibles publiquement.</small></section>
+        <div className="plan-detail-media">
+          <div className="plan-detail-preview">{plan.image ? <img src={plan.image} alt={`Vue principale — ${plan.name}`} /> : <div className="detail-gallery-empty"><Icon name="layers" size={36} /><span>Aucun aperçu fourni pour ce plan</span></div>}</div>
+          {(plan.gallery?.filter((image) => image !== plan.image) ?? []).length > 0 && (
+            <div className="plan-gallery" aria-label={`Toutes les vues de ${plan.name}`}>
+              {plan.gallery?.filter((image) => image !== plan.image).map((image, index) => (
+                <figure key={image}><img src={image} alt={`${plan.name} — vue ${index + 2}`} loading="lazy" /><figcaption>Vue {String(index + 2).padStart(2, "0")}</figcaption></figure>
+              ))}
+            </div>
+          )}
+        </div>
+        <section><span className="eyebrow">{plan.reference} · {plan.category || "Plan architectural"}</span><h1>{plan.name}</h1><p className="plan-detail-meta">{plan.meta || "Caractéristiques à renseigner"}</p><p>{plan.description || "Contactez DAFS Sarlu pour obtenir des informations sur ce modèle."}</p>{enquiryLink ? <a className="btn navy" href={enquiryLink} target="_blank" rel="noreferrer">Demander sur WhatsApp <Icon name="arrow" /></a> : <button className="btn navy" onClick={() => go("contact")}>Demander le plan complet <Icon name="arrow" /></button>}<small>Les plans techniques et les dimensions détaillées sont à demander à DAFS Sarlu.</small></section>
       </div>
     </main>
   );
@@ -1083,6 +1160,9 @@ function HomePage({
           />
           <button className="btn gold" onClick={() => go("plans")}>
             Explorer les modèles <Icon name="arrow" />
+          </button>
+          <button className="btn glass" onClick={() => go("construction")}>
+            Voir les chantiers en images <Icon name="arrow" />
           </button>
         </div>
       </section>
@@ -1554,8 +1634,7 @@ function PlansPage({ go, plans, onSelectPlan }: { go: (p: Page) => void; plans: 
   const [filter, setFilter] = useState("Tous les modèles");
   const filteredPlans = plans.filter((item) => {
     if (filter === "Tous les modèles") return true;
-    if (filter === "Plain-pied" || filter === "R+1") return item.meta.includes(filter);
-    return item.meta.includes(filter.replace(" chambres", " chambres"));
+    return item.category === filter;
   });
   return (
     <>
@@ -1567,7 +1646,7 @@ function PlansPage({ go, plans, onSelectPlan }: { go: (p: Page) => void; plans: 
       <section className="section container">
         <div className="plan-filter">
           <div>
-            {["Tous les modèles", "Plain-pied", "R+1", "3 chambres", "4 chambres"].map((x) => (
+            {["Tous les modèles", ...Array.from(new Set(plans.map((plan) => plan.category).filter(Boolean)))].map((x) => (
               <button onClick={() => setFilter(x)} className={filter === x ? "active" : ""} key={x}>
                 {x}
               </button>
@@ -1587,6 +1666,37 @@ function PlansPage({ go, plans, onSelectPlan }: { go: (p: Page) => void; plans: 
             description="Les plans architecturaux apparaîtront ici après leur ajout dans l’espace d’administration."
           />
         )}
+      </section>
+      <ConstructionCallout go={go} />
+    </>
+  );
+}
+
+function ConstructionCallout({ go }: { go: (page: Page) => void }) {
+  return (
+    <section className="construction-callout container">
+      <div><span className="eyebrow">Construction · galerie chantier</span><h2>Découvrez les séquences transmises par l’équipe.</h2><p>Des images classées par étapes visibles du chantier, avec les informations à confirmer avant de les citer comme références.</p></div>
+      <button className="btn navy" onClick={() => go("construction")}>Voir les photos et vidéos <Icon name="arrow" /></button>
+    </section>
+  );
+}
+
+function ConstructionPage() {
+  return (
+    <>
+      <PageHero eyebrow="Construction · galerie" title="Des étapes de chantier en images" text="Les photos et vidéos reçues sont regroupées selon les travaux visibles : fondations, armatures et interventions sur site." />
+      <section className="section container construction-page">
+        <p className="construction-attribution"><Icon name="shield" size={18} />{constructionAttributionNote}</p>
+        <div className="construction-groups">
+          {constructionGroups.map((group) => (
+            <article className="construction-group" key={group.title}>
+              <img className="construction-cover" src={group.cover} alt={group.title} loading="lazy" />
+              <div className="construction-group-copy"><span className="eyebrow">{group.videos.length} séquences vidéo{group.photos.length ? ` · ${group.photos.length} photo${group.photos.length > 1 ? "s" : ""}` : ""}</span><h2>{group.title}</h2><p>{group.description}</p></div>
+              {group.photos.length > 0 && <div className="construction-photos">{group.photos.map((photo) => <figure key={photo.src}><img src={photo.src} alt={photo.alt} loading="lazy" /></figure>)}</div>}
+              <details className="construction-video-details"><summary>Parcourir les {group.videos.length} séquences vidéo</summary><div className="construction-video-grid">{group.videos.map((src, index) => <figure key={src}><video controls preload="none" playsInline poster={group.cover.endsWith(".mp4") ? undefined : group.cover}><source src={src} type="video/mp4" />Votre navigateur ne prend pas en charge la lecture vidéo.</video><figcaption>Séquence {String(index + 1).padStart(2, "0")}</figcaption></figure>)}</div></details>
+            </article>
+          ))}
+        </div>
       </section>
     </>
   );
@@ -2034,7 +2144,7 @@ export default function App({
         .is("archived_at", null)
         .order("published_at", { ascending: false });
       if (!active || error) return;
-      setPlans((data ?? []).map((row) => ({
+      const publishedPlans = (data ?? []).map((row) => ({
         id: row.id,
         reference: row.reference,
         name: row.title,
@@ -2048,7 +2158,14 @@ export default function App({
         image: row.preview_storage_path
           ? client.storage.from("architectural-previews").getPublicUrl(row.preview_storage_path).data.publicUrl
           : "",
-      })));
+        gallery: row.preview_storage_path
+          ? [client.storage.from("architectural-previews").getPublicUrl(row.preview_storage_path).data.publicUrl]
+          : [],
+      }));
+      setPlans([
+        ...starterPlans.filter((starter) => !publishedPlans.some((published) => published.reference === starter.reference)),
+        ...publishedPlans,
+      ]);
     };
     window.addEventListener("focus", loadPublishedPlans);
     return () => {
@@ -2109,6 +2226,7 @@ export default function App({
     rentals: <CataloguePage mode="rentals" go={go} onSelectProperty={selectProperty} properties={properties} loading={propertiesLoading} loadError={propertiesLoadError} />,
     sales: <CataloguePage mode="sales" go={go} onSelectProperty={selectProperty} properties={properties} loading={propertiesLoading} loadError={propertiesLoadError} />,
     plans: <PlansPage go={go} plans={plans} onSelectPlan={selectPlan} />,
+    construction: <ConstructionPage />,
     services: <ServicesDirectory services={services} onSelect={selectService} />,
     "service-detail": selectedService ? <PublicServicePage service={selectedService} go={go} settings={initialSettings} /> : <ServicesDirectory services={services} onSelect={selectService} />,
     detail: (

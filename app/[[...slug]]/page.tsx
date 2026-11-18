@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import App, { starterProperties, starterPublicServices, type ArchitecturalPlan, type PropertyListing, type PublicService, type ServiceMedia, type SiteSettings } from "../../src/App";
+import App, { starterPlans, starterProperties, starterPublicServices, type ArchitecturalPlan, type PropertyListing, type PublicService, type ServiceMedia, type SiteSettings } from "../../src/App";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +29,7 @@ async function loadPublishedContent(): Promise<{
   };
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-  if (!url || !key) return { properties: starterProperties, plans: [], settings: defaultSettings, services: fallbackServices, error: true };
+  if (!url || !key) return { properties: starterProperties, plans: starterPlans, settings: defaultSettings, services: fallbackServices, error: true };
 
   const client = createClient(url, key, {
     auth: { autoRefreshToken: false, persistSession: false },
@@ -75,7 +75,7 @@ async function loadPublishedContent(): Promise<{
     ]);
 
     if (propertyResult.error || planResult.error || settingsResult.error) {
-      return { properties: starterProperties, plans: [], settings: defaultSettings, services: fallbackServices, error: true };
+      return { properties: starterProperties, plans: starterPlans, settings: defaultSettings, services: fallbackServices, error: true };
     }
 
     const properties = (propertyResult.data ?? []).map((row: any) => {
@@ -141,7 +141,7 @@ async function loadPublishedContent(): Promise<{
         images,
       };
     });
-    const plans = (planResult.data ?? []).map((row) => ({
+    const publishedPlans = (planResult.data ?? []).map((row) => ({
       id: row.id,
       reference: row.reference,
       name: row.title,
@@ -158,7 +158,14 @@ async function loadPublishedContent(): Promise<{
         ? client.storage.from("architectural-previews").getPublicUrl(row.preview_storage_path).data
             .publicUrl
         : "",
+      gallery: row.preview_storage_path
+        ? [client.storage.from("architectural-previews").getPublicUrl(row.preview_storage_path).data.publicUrl]
+        : [],
     }));
+    const plans = [
+      ...starterPlans.filter((starter) => !publishedPlans.some((published) => published.reference === starter.reference)),
+      ...publishedPlans,
+    ];
 
     const values = (settingsResult.data?.settings ?? {}) as Record<string, unknown>;
     const removedNumber = ["243", "838", "755", "731"].join("");
@@ -218,7 +225,7 @@ async function loadPublishedContent(): Promise<{
     });
     return { properties, plans, settings, services, error: false };
   } catch {
-    return { properties: starterProperties, plans: [], settings: defaultSettings, services: fallbackServices, error: true };
+    return { properties: starterProperties, plans: starterPlans, settings: defaultSettings, services: fallbackServices, error: true };
   }
 }
 
