@@ -18,6 +18,8 @@ Dans le tableau de bord Supabase, ouvrir **SQL Editor** et exécuter les fichier
 10. `migrations/202611170006_homepage_title.sql` met à jour le titre de la page d’accueil.
 11. `migrations/202611170007_restore_company_name_home_title.sql` conserve « DAFS Sarlu » et ajoute « Agence immobilière » au titre.
 12. `migrations/202611180001_news_property_listings.sql` ajoute les quatre annonces du dossier `src/img/A-VENDRE/NEWS` et leurs galeries de photos/vidéos.
+13. `migrations/202611180002_site_gallery_management.sql` active la gestion des plans architecturaux et de la galerie Construction, puis importe les plans, vues et médias de chantier déjà présents sur le site.
+14. `migrations/202611180003_register_all_project_media.sql` ajoute les médias d’aménagement à la bibliothèque admin et autorise les vidéos de visite des biens dans Storage.
 
 ## Créer le premier compte administrateur
 
@@ -26,10 +28,17 @@ Dans le tableau de bord Supabase, ouvrir **SQL Editor** et exécuter les fichier
 
 ```sql
 update public.profiles
-set is_active = true
-where id = (
-  select id from auth.users where lower(email) = lower('admin@example.com')
-);
+set is_active = true,
+    updated_at = now()
+where id = (select id from auth.users where lower(email) = lower('admin@example.com'));
+
+-- Si l’utilisateur a été créé avant l’installation du déclencheur de profil,
+-- crée le profil manquant et l’active.
+insert into public.profiles (id, is_active)
+select id, true
+from auth.users
+where lower(email) = lower('admin@example.com')
+on conflict (id) do update set is_active = true, updated_at = now();
 
 insert into public.user_roles (user_id, role_id)
 select p.id, r.id
@@ -49,6 +58,10 @@ Le client public lit uniquement les propriétés publiées. La création, la mod
 Après les quatre migrations initiales, exécuter la migration `202611170001_services_media.sql`. Elle crée les pages « Déménagement & aménagement » et « Cleaner », toutes deux publiées avec un texte de départ modifiable dans l’admin. La bibliothèque permet d’importer plusieurs fichiers ou un dossier complet, de reclasser chaque média, de l’associer à une page et de choisir s’il est public. Les vidéos sont transférées par blocs afin de reprendre plus fiablement les imports interrompus.
 
 Pour les migrations de contenu ajoutées par la suite, exécuter chaque fichier numéroté suivant une seule fois et dans l’ordre. Le texte affiché par le site reste modifiable dans l’espace admin après l’application des migrations.
+
+Après la migration 13, l’admin peut modifier chaque fiche de plan, ajouter ou retirer ses vues, et classer, publier ou supprimer les médias de Construction. Les contenus initiaux pointent vers les fichiers versionnés du site; leurs fiches peuvent être retirées de l’admin sans effacer ces fichiers du dépôt.
+
+Après la migration 14 et le déploiement de l’admin, **Services & médias → Bibliothèque médias → Importer les médias du projet** transfère les fichiers existants vers les buckets Supabase adaptés et met à jour leurs références dans les annonces, les plans et la bibliothèque. L’import est reprenable : les références déjà migrées sont ignorées. Le projet contient environ 200 Mo de médias.
 
 Les fichiers sources de `src/img` ne sont pas versionnés. Les médias retenus pour les annonces `A-VENDRE/NEWS` et le service `AMENAGEMENT` sont normalisés et versionnés dans `public/property-media/news` et `public/service-media/moving` pour l’affichage public. Les quatre annonces sont enregistrées par la migration 12. Pour pouvoir ensuite gérer les médias d’aménagement depuis **Admin → Services & médias → Bibliothèque médias**, il faudra importer le dossier correspondant dans Supabase Storage puis retirer le secours statique du site.
 

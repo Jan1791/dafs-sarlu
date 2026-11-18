@@ -483,6 +483,7 @@ function propertyTarget(type: string): Page {
 export type ArchitecturalPlan = { id: string; reference: string; name: string; meta: string; image: string; gallery?: string[]; description: string; category: string };
 export type ServiceMedia = { id: string; title: string; description: string; url: string; alt: string; mimeType: string; poster?: string };
 export type PublicService = { id: string; slug: string; title: string; eyebrow: string; summary: string; body: string; features: string[]; media: ServiceMedia[] };
+export type PublicConstructionMedia = { id: string; title: string; description: string; alt: string; mimeType: string; url: string; collectionTitle: string; sortOrder: number };
 
 const movingServiceMedia: ServiceMedia[] = [
   ...Array.from({ length: 24 }, (_, index) => {
@@ -543,7 +544,7 @@ type ConstructionGroup = {
   description: string;
   cover: string;
   photos: { src: string; alt: string }[];
-  videos: string[];
+  videos: { src: string; title: string }[];
 };
 
 const constructionGroups: ConstructionGroup[] = [
@@ -555,21 +556,21 @@ const constructionGroups: ConstructionGroup[] = [
       { src: "/construction-media/photos/soudure-armature.jpg", alt: "Travail de soudure sur une armature métallique" },
       { src: "/construction-media/photos/armature-metal.jpg", alt: "Armature métallique préparée pour un chantier" },
     ],
-    videos: Array.from({ length: 9 }, (_, index) => `/construction-media/fondations/sequence-${String(index + 1).padStart(2, "0")}.mp4`),
+    videos: Array.from({ length: 9 }, (_, index) => ({ src: `/construction-media/fondations/sequence-${String(index + 1).padStart(2, "0")}.mp4`, title: `Séquence ${String(index + 1).padStart(2, "0")}` })),
   },
   {
     title: "Armatures et structure",
     description: "Vues de ferraillage, de préparation des éléments porteurs et de travaux de structure.",
     cover: "/construction-media/posters/structure.jpg",
     photos: [],
-    videos: Array.from({ length: 14 }, (_, index) => `/construction-media/structure/sequence-${String(index + 1).padStart(2, "0")}.mp4`),
+    videos: Array.from({ length: 14 }, (_, index) => ({ src: `/construction-media/structure/sequence-${String(index + 1).padStart(2, "0")}.mp4`, title: `Séquence ${String(index + 1).padStart(2, "0")}` })),
   },
   {
     title: "Travaux sur site",
     description: "Séquences complémentaires montrant des interventions sur chantier et une équipe en tenue de travail.",
     cover: "/construction-media/photos/equipe-chantier.jpg",
     photos: [{ src: "/construction-media/photos/equipe-chantier.jpg", alt: "Équipe réunie sur un chantier" }],
-    videos: Array.from({ length: 10 }, (_, index) => `/construction-media/chantier/sequence-${String(index + 1).padStart(2, "0")}.mp4`),
+    videos: Array.from({ length: 10 }, (_, index) => ({ src: `/construction-media/chantier/sequence-${String(index + 1).padStart(2, "0")}.mp4`, title: `Séquence ${String(index + 1).padStart(2, "0")}` })),
   },
 ];
 
@@ -1681,21 +1682,39 @@ function ConstructionCallout({ go }: { go: (page: Page) => void }) {
   );
 }
 
-function ConstructionPage() {
+function ConstructionPage({ media, managed }: { media: PublicConstructionMedia[]; managed: boolean }) {
+  const groupedMedia = new Map<string, PublicConstructionMedia[]>();
+  for (const asset of [...media].sort((a, b) => a.sortOrder - b.sortOrder)) {
+    const title = asset.collectionTitle.trim() || "Autres travaux";
+    groupedMedia.set(title, [...(groupedMedia.get(title) ?? []), asset]);
+  }
+  const publishedGroups: ConstructionGroup[] = Array.from(groupedMedia, ([title, items]) => {
+    const photos = items.filter((item) => item.mimeType.startsWith("image/"));
+    const videos = items.filter((item) => item.mimeType.startsWith("video/"));
+    return {
+      title,
+      description: "Photos et séquences vidéo classées par l’équipe dans la bibliothèque médias.",
+      cover: photos[0]?.url ?? "/construction-media/posters/structure.jpg",
+      photos: photos.map((item) => ({ src: item.url, alt: item.alt || item.title })),
+      videos: videos.map((item) => ({ src: item.url, title: item.title })),
+    };
+  });
+  const groups = media.length ? publishedGroups : managed ? [] : constructionGroups;
   return (
     <>
       <PageHero eyebrow="Construction · galerie" title="Des étapes de chantier en images" text="Les photos et vidéos reçues sont regroupées selon les travaux visibles : fondations, armatures et interventions sur site." />
       <section className="section container construction-page">
         <p className="construction-attribution"><Icon name="shield" size={18} />{constructionAttributionNote}</p>
         <div className="construction-groups">
-          {constructionGroups.map((group) => (
+          {groups.map((group) => (
             <article className="construction-group" key={group.title}>
               <img className="construction-cover" src={group.cover} alt={group.title} loading="lazy" />
               <div className="construction-group-copy"><span className="eyebrow">{group.videos.length} séquences vidéo{group.photos.length ? ` · ${group.photos.length} photo${group.photos.length > 1 ? "s" : ""}` : ""}</span><h2>{group.title}</h2><p>{group.description}</p></div>
               {group.photos.length > 0 && <div className="construction-photos">{group.photos.map((photo) => <figure key={photo.src}><img src={photo.src} alt={photo.alt} loading="lazy" /></figure>)}</div>}
-              <details className="construction-video-details"><summary>Parcourir les {group.videos.length} séquences vidéo</summary><div className="construction-video-grid">{group.videos.map((src, index) => <figure key={src}><video controls preload="none" playsInline poster={group.cover.endsWith(".mp4") ? undefined : group.cover}><source src={src} type="video/mp4" />Votre navigateur ne prend pas en charge la lecture vidéo.</video><figcaption>Séquence {String(index + 1).padStart(2, "0")}</figcaption></figure>)}</div></details>
+              {!!group.videos.length && <details className="construction-video-details"><summary>Parcourir les {group.videos.length} séquences vidéo</summary><div className="construction-video-grid">{group.videos.map((video) => <figure key={video.src}><video controls preload="none" playsInline poster={group.cover}><source src={video.src} type="video/mp4" />Votre navigateur ne prend pas en charge la lecture vidéo.</video><figcaption>{video.title}</figcaption></figure>)}</div></details>}
             </article>
           ))}
+          {!groups.length && <PublishedContentEmpty title="Aucun média publié dans cette galerie" description="L’équipe ajoutera et publiera les photos et vidéos depuis l’espace d’administration." />}
         </div>
       </section>
     </>
@@ -1972,12 +1991,18 @@ export default function App({
   initialSettings,
   initialServices = [],
   initialDataError = false,
+  initialConstructionMedia = [],
+  initialPlansManaged = false,
+  initialConstructionManaged = false,
 }: {
   initialProperties: PropertyListing[];
   initialPlans: ArchitecturalPlan[];
   initialSettings: SiteSettings;
   initialServices?: PublicService[];
   initialDataError?: boolean;
+  initialConstructionMedia?: PublicConstructionMedia[];
+  initialPlansManaged?: boolean;
+  initialConstructionManaged?: boolean;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -1985,6 +2010,7 @@ export default function App({
   const [page, setPage] = useState<Page>(() => pageFromPath(pathname));
   const [properties, setProperties] = useState<PropertyListing[]>(initialProperties);
   const [plans, setPlans] = useState<ArchitecturalPlan[]>(initialPlans);
+  const [constructionMedia, setConstructionMedia] = useState<PublicConstructionMedia[]>(initialConstructionMedia);
   const [services, setServices] = useState<PublicService[]>(initialServices);
   const [propertiesLoading, setPropertiesLoading] = useState(false);
   const [propertiesLoadError, setPropertiesLoadError] = useState(initialDataError);
@@ -2092,9 +2118,22 @@ export default function App({
       if (!client) return;
       const [serviceResult, mediaResult] = await Promise.all([
         client.from("service_pages").select("id, slug, title, eyebrow, summary, body, features").eq("publication_status", "published").order("sort_order").order("title"),
-        client.from("media_assets").select("id, service_id, title, description, alt_text, mime_type, storage_path").eq("is_published", true).order("sort_order").order("created_at"),
+        client.from("media_assets").select("id, service_id, title, description, alt_text, mime_type, storage_path, category, collection_title, sort_order").eq("is_published", true).order("sort_order").order("created_at"),
       ]);
       if (!active || serviceResult.error || mediaResult.error) return;
+      const publicMediaUrl = (path: string) => path.startsWith("local:")
+        ? path.slice("local:".length)
+        : client.storage.from("site-media").getPublicUrl(path).data.publicUrl;
+      setConstructionMedia((mediaResult.data ?? []).filter((asset) => asset.category === "construction").map((asset) => ({
+        id: asset.id,
+        title: asset.title,
+        description: asset.description ?? "",
+        alt: asset.alt_text ?? "",
+        mimeType: asset.mime_type,
+        url: publicMediaUrl(asset.storage_path),
+        collectionTitle: asset.collection_title ?? "",
+        sortOrder: asset.sort_order ?? 0,
+      })));
       if (!serviceResult.data?.length) return;
       const mediaByService = new Map<string, ServiceMedia[]>();
       for (const asset of mediaResult.data ?? []) {
@@ -2106,7 +2145,7 @@ export default function App({
           description: asset.description ?? "",
           alt: asset.alt_text ?? "",
           mimeType: asset.mime_type,
-          url: client.storage.from("site-media").getPublicUrl(asset.storage_path).data.publicUrl,
+          url: publicMediaUrl(asset.storage_path),
         });
         mediaByService.set(asset.service_id, list);
       }
@@ -2139,11 +2178,14 @@ export default function App({
       if (!client) return;
       const { data, error } = await client
         .from("architectural_plans")
-        .select("id, reference, title, description, category, built_area_m2, bedrooms, floors, preview_storage_path")
+        .select("id, reference, title, description, category, built_area_m2, bedrooms, floors, preview_storage_path, architectural_plan_media(storage_path, sort_order)")
         .eq("publication_status", "published")
         .is("archived_at", null)
         .order("published_at", { ascending: false });
       if (!active || error) return;
+      const publicPlanUrl = (path: string) => path.startsWith("local:")
+        ? path.slice("local:".length)
+        : client.storage.from("architectural-previews").getPublicUrl(path).data.publicUrl;
       const publishedPlans = (data ?? []).map((row) => ({
         id: row.id,
         reference: row.reference,
@@ -2155,17 +2197,15 @@ export default function App({
           row.bedrooms && `${row.bedrooms} chambres`,
           row.floors && (row.floors === 1 ? "Plain-pied" : `R+${row.floors - 1}`),
         ].filter(Boolean).join(" · "),
-        image: row.preview_storage_path
-          ? client.storage.from("architectural-previews").getPublicUrl(row.preview_storage_path).data.publicUrl
-          : "",
-        gallery: row.preview_storage_path
-          ? [client.storage.from("architectural-previews").getPublicUrl(row.preview_storage_path).data.publicUrl]
-          : [],
+        image: row.preview_storage_path ? publicPlanUrl(row.preview_storage_path) : "",
+        gallery: [
+          ...(row.preview_storage_path ? [row.preview_storage_path] : []),
+          ...[...(row.architectural_plan_media ?? [])].sort((a, b) => a.sort_order - b.sort_order).map((media) => media.storage_path),
+        ].map(publicPlanUrl),
       }));
-      setPlans([
-        ...starterPlans.filter((starter) => !publishedPlans.some((published) => published.reference === starter.reference)),
-        ...publishedPlans,
-      ]);
+      setPlans(initialPlansManaged
+        ? publishedPlans
+        : [...starterPlans.filter((starter) => !publishedPlans.some((published) => published.reference === starter.reference)), ...publishedPlans]);
     };
     window.addEventListener("focus", loadPublishedPlans);
     return () => {
@@ -2226,7 +2266,7 @@ export default function App({
     rentals: <CataloguePage mode="rentals" go={go} onSelectProperty={selectProperty} properties={properties} loading={propertiesLoading} loadError={propertiesLoadError} />,
     sales: <CataloguePage mode="sales" go={go} onSelectProperty={selectProperty} properties={properties} loading={propertiesLoading} loadError={propertiesLoadError} />,
     plans: <PlansPage go={go} plans={plans} onSelectPlan={selectPlan} />,
-    construction: <ConstructionPage />,
+    construction: <ConstructionPage media={constructionMedia} managed={initialConstructionManaged} />,
     services: <ServicesDirectory services={services} onSelect={selectService} />,
     "service-detail": selectedService ? <PublicServicePage service={selectedService} go={go} settings={initialSettings} /> : <ServicesDirectory services={services} onSelect={selectService} />,
     detail: (

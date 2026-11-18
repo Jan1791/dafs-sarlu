@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import App, { starterPlans, starterProperties, starterPublicServices, type ArchitecturalPlan, type PropertyListing, type PublicService, type ServiceMedia, type SiteSettings } from "../../src/App";
+import App, { starterPlans, starterProperties, starterPublicServices, type ArchitecturalPlan, type PropertyListing, type PublicConstructionMedia, type PublicService, type ServiceMedia, type SiteSettings } from "../../src/App";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +10,9 @@ async function loadPublishedContent(): Promise<{
   plans: ArchitecturalPlan[];
   settings: SiteSettings;
   services: PublicService[];
+  constructionMedia: PublicConstructionMedia[];
+  plansManaged: boolean;
+  constructionManaged: boolean;
   error: boolean;
 }> {
   const defaultSettings: SiteSettings = {
@@ -29,7 +32,7 @@ async function loadPublishedContent(): Promise<{
   };
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-  if (!url || !key) return { properties: starterProperties, plans: starterPlans, settings: defaultSettings, services: fallbackServices, error: true };
+  if (!url || !key) return { properties: starterProperties, plans: starterPlans, settings: defaultSettings, services: fallbackServices, constructionMedia: [], plansManaged: false, constructionManaged: false, error: true };
 
   const client = createClient(url, key, {
     auth: { autoRefreshToken: false, persistSession: false },
@@ -40,7 +43,7 @@ async function loadPublishedContent(): Promise<{
   });
 
   try {
-    const [propertyResult, planResult, settingsResult, serviceResult, mediaResult] = await Promise.all([
+    const [propertyResult, planResult, settingsResult, serviceResult, mediaResult, galleryControlResult] = await Promise.all([
       client
         .from("properties")
         .select(
@@ -51,7 +54,7 @@ async function loadPublishedContent(): Promise<{
         .order("published_at", { ascending: false }),
       client
         .from("architectural_plans")
-        .select("id, reference, title, description, category, built_area_m2, bedrooms, floors, preview_storage_path")
+        .select("id, reference, title, description, category, built_area_m2, bedrooms, floors, preview_storage_path, architectural_plan_media(storage_path, sort_order)")
         .eq("publication_status", "published")
         .is("archived_at", null)
         .order("published_at", { ascending: false }),
@@ -68,14 +71,15 @@ async function loadPublishedContent(): Promise<{
         .order("title"),
       client
         .from("media_assets")
-        .select("id, service_id, title, description, alt_text, mime_type, storage_path")
+        .select("id, service_id, title, description, alt_text, mime_type, storage_path, category, collection_title, sort_order")
         .eq("is_published", true)
         .order("sort_order")
         .order("created_at"),
+      client.from("site_content_controls").select("architectural_plans_managed, construction_gallery_managed").eq("id", "public").maybeSingle(),
     ]);
 
     if (propertyResult.error || planResult.error || settingsResult.error) {
-      return { properties: starterProperties, plans: starterPlans, settings: defaultSettings, services: fallbackServices, error: true };
+      return { properties: starterProperties, plans: starterPlans, settings: defaultSettings, services: fallbackServices, constructionMedia: [], plansManaged: false, constructionManaged: false, error: true };
     }
 
     const properties = (propertyResult.data ?? []).map((row: any) => {
@@ -141,6 +145,9 @@ async function loadPublishedContent(): Promise<{
         images,
       };
     });
+    const publicFileUrl = (bucket: string, path: string) => path.startsWith("local:")
+      ? path.slice("local:".length)
+      : client.storage.from(bucket).getPublicUrl(path).data.publicUrl;
     const publishedPlans = (planResult.data ?? []).map((row) => ({
       id: row.id,
       reference: row.reference,
@@ -154,15 +161,15 @@ async function loadPublishedContent(): Promise<{
       ]
         .filter(Boolean)
         .join(" · "),
-      image: row.preview_storage_path
-        ? client.storage.from("architectural-previews").getPublicUrl(row.preview_storage_path).data
-            .publicUrl
-        : "",
-      gallery: row.preview_storage_path
-        ? [client.storage.from("architectural-previews").getPublicUrl(row.preview_storage_path).data.publicUrl]
-        : [],
+      image: row.preview_storage_path ? publicFileUrl("architectural-previews", row.preview_storage_path) : "",
+      gallery: [
+        ...(row.preview_storage_path ? [row.preview_storage_path] : []),
+        ...[...(row.architectural_plan_media ?? [])].sort((a, b) => a.sort_order - b.sort_order).map((media) => media.storage_path),
+      ].map((path) => publicFileUrl("architectural-previews", path)),
     }));
-    const plans = [
+    const plansManaged = galleryControlResult.data?.architectural_plans_managed === true;
+    const constructionManaged = galleryControlResult.data?.construction_gallery_managed === true;
+    const plans = plansManaged ? publishedPlans : [
       ...starterPlans.filter((starter) => !publishedPlans.some((published) => published.reference === starter.reference)),
       ...publishedPlans,
     ];
@@ -202,7 +209,7 @@ async function loadPublishedContent(): Promise<{
           description: asset.description ?? "",
           alt: asset.alt_text ?? "",
           mimeType: asset.mime_type,
-          url: client.storage.from("site-media").getPublicUrl(asset.storage_path).data.publicUrl,
+          url: publicFileUrl("site-media", asset.storage_path),
         });
         mediaByService.set(asset.service_id, items);
       }
@@ -223,13 +230,23 @@ async function loadPublishedContent(): Promise<{
         media: publishedMedia.length ? publishedMedia : fallback?.media ?? [],
       };
     });
-    return { properties, plans, settings, services, error: false };
+    const constructionMedia = (mediaResult.data ?? []).filter((asset) => asset.category === "construction").map((asset) => ({
+      id: asset.id,
+      title: asset.title,
+      description: asset.description ?? "",
+      alt: asset.alt_text ?? "",
+      mimeType: asset.mime_type,
+      url: publicFileUrl("site-media", asset.storage_path),
+      collectionTitle: asset.collection_title ?? "",
+      sortOrder: asset.sort_order ?? 0,
+    }));
+    return { properties, plans, settings, services, constructionMedia, plansManaged, constructionManaged, error: false };
   } catch {
-    return { properties: starterProperties, plans: starterPlans, settings: defaultSettings, services: fallbackServices, error: true };
+    return { properties: starterProperties, plans: starterPlans, settings: defaultSettings, services: fallbackServices, constructionMedia: [], plansManaged: false, constructionManaged: false, error: true };
   }
 }
 
 export default async function SitePage() {
-  const { properties, plans, settings, services, error } = await loadPublishedContent();
-  return <App initialProperties={properties} initialPlans={plans} initialSettings={settings} initialServices={services} initialDataError={error} />;
+  const { properties, plans, settings, services, constructionMedia, plansManaged, constructionManaged, error } = await loadPublishedContent();
+  return <App initialProperties={properties} initialPlans={plans} initialSettings={settings} initialServices={services} initialDataError={error} initialConstructionMedia={constructionMedia} initialPlansManaged={plansManaged} initialConstructionManaged={constructionManaged} />;
 }

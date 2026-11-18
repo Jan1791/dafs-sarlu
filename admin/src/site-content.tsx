@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState, type ChangeEvent, type FormE
 import { Upload as TusUpload } from "tus-js-client";
 import { Check, Eye, EyeOff, Film, Image as ImageIcon, LoaderCircle, Pencil, Plus, Trash2, UploadCloud, X } from "lucide-react";
 import { supabase } from "./lib/supabase";
+import { getLocalMediaUrl } from "./media-url";
 
 type ServicePage = {
   id: string;
@@ -26,6 +27,7 @@ type MediaAsset = {
   description: string;
   alt_text: string;
   category: MediaCategory;
+  collection_title: string;
   storage_path: string;
   source_path: string;
   mime_type: string;
@@ -75,6 +77,21 @@ function inferCategory(file: File): MediaCategory {
   return "other";
 }
 
+function inferCollectionTitle(file: File, category: MediaCategory) {
+  const path = (file.webkitRelativePath || file.name).toLowerCase();
+  if (category === "construction") {
+    if (path.includes("09.03.")) return "Fondations et ferraillage";
+    if (path.includes("09.14.")) return "Armatures et structure";
+    if (path.includes("09.31.")) return "Travaux sur site";
+    return "Autres travaux";
+  }
+  if (category === "architecture") {
+    if (path.includes("dossier-1")) return "Immeuble contemporain";
+    if (path.includes("dossier-2")) return "Maison contemporaine à étage";
+  }
+  return "";
+}
+
 function formatBytes(bytes: number) {
   if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} Ko`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
@@ -104,6 +121,8 @@ export default function SiteContentPage() {
   const [uploadServiceId, setUploadServiceId] = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0, file: "" });
+  const [importingProjectMedia, setImportingProjectMedia] = useState(false);
+  const [projectImportProgress, setProjectImportProgress] = useState({ current: 0, total: 0, file: "" });
   const [filter, setFilter] = useState<MediaCategory | "all">("all");
 
   const loadContent = useCallback(async () => {
@@ -119,7 +138,7 @@ export default function SiteContentPage() {
       supabase.from("media_assets").select("*").order("created_at", { ascending: false }),
     ]);
     if (serviceResult.error || mediaResult.error) {
-      setError("Le module de contenu n’est pas encore configuré. Appliquez la migration 202611170001_services_media.sql dans le SQL Editor Supabase.");
+      setError("Le module de contenu n’est pas encore configuré. Appliquez les migrations 202611170001_services_media.sql et 202611180002_site_gallery_management.sql dans le SQL Editor Supabase.");
       setLoading(false);
       return;
     }
@@ -186,11 +205,13 @@ export default function SiteContentPage() {
   };
 
   const deleteAsset = async (asset: MediaAsset) => {
-    if (!supabase || !window.confirm(`Supprimer définitivement « ${asset.title} » du site et du stockage ?`)) return;
+    if (!supabase || !window.confirm(`Retirer définitivement « ${asset.title} » de la bibliothèque et du site ?`)) return;
     const { error: rowError } = await supabase.from("media_assets").delete().eq("id", asset.id);
     if (rowError) { setError("La fiche de ce média n’a pas pu être supprimée."); return; }
-    const { error: storageError } = await supabase.storage.from("site-media").remove([asset.storage_path]);
-    if (storageError) setError("La fiche est supprimée, mais le fichier est resté dans Storage.");
+    if (!asset.storage_path.startsWith("local:")) {
+      const { error: storageError } = await supabase.storage.from("site-media").remove([asset.storage_path]);
+      if (storageError) setError("La fiche est supprimée, mais le fichier est resté dans Storage.");
+    }
     await loadContent();
   };
 
@@ -203,16 +224,16 @@ export default function SiteContentPage() {
     setError("");
   };
 
-  const uploadOne = (file: File, path: string, token: string, apiKey: string, endpoint: string, onProgress: (sent: number, total: number) => void) => new Promise<void>((resolve, reject) => {
+  const uploadOne = (file: Blob, bucket: string, path: string, token: string, apiKey: string, endpoint: string, onProgress: (sent: number, total: number) => void) => new Promise<void>((resolve, reject) => {
     const upload = new TusUpload(file, {
       endpoint,
       retryDelays: [0, 1500, 3000, 6000, 10000],
       chunkSize: 6 * 1024 * 1024,
       uploadDataDuringCreation: true,
       removeFingerprintOnSuccess: true,
-      headers: { authorization: `Bearer ${token}`, apikey: apiKey },
+      headers: { authorization: `Bearer ${token}`, apikey: apiKey, "x-upsert": "true" },
       metadata: {
-        bucketName: "site-media",
+        bucketName: bucket,
         objectName: path,
         contentType: file.type,
         cacheControl: "3600",
@@ -248,7 +269,7 @@ export default function SiteContentPage() {
       const path = `${category}/${assetId}-${cleanFileName(file.name)}`;
       setUploadProgress({ current: index, total: files.length, file: file.name });
       try {
-        await uploadOne(file, path, session.access_token, apiKey, endpoint, (sent) => {
+        await uploadOne(file, "site-media", path, session.access_token, apiKey, endpoint, (sent) => {
           setUploadProgress({ current: index + sent / Math.max(file.size, 1), total: files.length, file: file.name });
         });
         const { error: rowError } = await supabase.from("media_assets").insert({
@@ -258,6 +279,7 @@ export default function SiteContentPage() {
           description: "",
           alt_text: "",
           category,
+          collection_title: inferCollectionTitle(file, category),
           storage_path: path,
           source_path: file.webkitRelativePath || file.name,
           mime_type: file.type,
@@ -278,6 +300,77 @@ export default function SiteContentPage() {
     setUploading(false);
     setFiles([]);
     if (failures.length) setError(`Import terminé avec ${failures.length} fichier(s) à reprendre : ${failures.slice(0, 4).join(" ")}`);
+    await loadContent();
+  };
+
+  const importProjectMediaToStorage = async () => {
+    if (!supabase || importingProjectMedia) return;
+    const siteUrl = process.env.NEXT_PUBLIC_PUBLIC_SITE_URL?.replace(/\/$/, "");
+    const apiKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    const session = sessionData.session;
+    if (!siteUrl || !apiKey || !supabaseUrl || sessionError || !session) {
+      setError("La migration des médias nécessite l’URL du site public, les variables Supabase et une session administrateur active.");
+      return;
+    }
+
+    const [propertyResult, planResult, planMediaResult, assetResult] = await Promise.all([
+      supabase.from("property_images").select("id, storage_path").like("storage_path", "local:%"),
+      supabase.from("architectural_plans").select("id, preview_storage_path").like("preview_storage_path", "local:%"),
+      supabase.from("architectural_plan_media").select("id, storage_path").like("storage_path", "local:%"),
+      supabase.from("media_assets").select("id, storage_path").like("storage_path", "local:%"),
+    ]);
+    const queryError = propertyResult.error || planResult.error || planMediaResult.error || assetResult.error;
+    if (queryError) {
+      setError(`Les références médias ne peuvent pas être chargées (${queryError.message}). Appliquez les migrations Supabase du catalogue et des médias.`);
+      return;
+    }
+    const tasks = [
+      ...(propertyResult.data ?? []).map((row) => ({ table: "property_images", field: "storage_path", id: row.id, storagePath: row.storage_path, bucket: "property-images" })),
+      ...(planResult.data ?? []).map((row) => ({ table: "architectural_plans", field: "preview_storage_path", id: row.id, storagePath: row.preview_storage_path!, bucket: "architectural-previews" })),
+      ...(planMediaResult.data ?? []).map((row) => ({ table: "architectural_plan_media", field: "storage_path", id: row.id, storagePath: row.storage_path, bucket: "architectural-previews" })),
+      ...(assetResult.data ?? []).map((row) => ({ table: "media_assets", field: "storage_path", id: row.id, storagePath: row.storage_path, bucket: "site-media" })),
+    ];
+    if (!tasks.length) {
+      setError("Tous les médias déjà référencés sont importés dans Supabase Storage.");
+      return;
+    }
+
+    setImportingProjectMedia(true);
+    setProjectImportProgress({ current: 0, total: tasks.length, file: "Préparation…" });
+    setError("");
+    const failures: string[] = [];
+    const endpoint = storageEndpoint(supabaseUrl);
+    for (const [index, task] of tasks.entries()) {
+      const publicPath = task.storagePath.slice("local:".length);
+      const objectPath = `project-import${publicPath}`.replace(/^\/+/, "");
+      const name = publicPath.split("/").pop() || publicPath;
+      setProjectImportProgress({ current: index, total: tasks.length, file: name });
+      try {
+        const response = await fetch(new URL(publicPath, `${siteUrl}/`));
+        if (!response.ok) throw new Error(`Le fichier source répond ${response.status}.`);
+        const blob = await response.blob();
+        const file = new File([blob], name, { type: blob.type || "application/octet-stream" });
+        await uploadOne(file, task.bucket, objectPath, session.access_token, apiKey, endpoint, (sent) => {
+          setProjectImportProgress({ current: index + sent / Math.max(file.size, 1), total: tasks.length, file: name });
+        });
+        const updateValues = task.table === "media_assets"
+          ? { [task.field]: objectPath, file_size: file.size }
+          : { [task.field]: objectPath };
+        const { error: updateError } = await (supabase.from(task.table) as any).update(updateValues).eq("id", task.id);
+        if (updateError) {
+          await supabase.storage.from(task.bucket).remove([objectPath]);
+          throw new Error(`Le fichier est transféré, mais sa fiche n’a pas pu être actualisée (${updateError.message}).`);
+        }
+      } catch (cause) {
+        failures.push(`${name} : ${cause instanceof Error ? cause.message : "échec du transfert"}`);
+      }
+      setProjectImportProgress({ current: index + 1, total: tasks.length, file: name });
+    }
+    setImportingProjectMedia(false);
+    if (failures.length) setError(`Import terminé : ${tasks.length - failures.length}/${tasks.length} médias. À reprendre : ${failures.slice(0, 3).join(" · ")}`);
+    else setError(`Import terminé : ${tasks.length} médias sont maintenant dans Supabase Storage. Rechargez le tableau de bord pour afficher les nouvelles images.`);
     await loadContent();
   };
 
@@ -342,10 +435,13 @@ export default function SiteContentPage() {
             </div>}
           </section>
           <section className="media-library-section">
-            <div className="media-library-toolbar"><div><h2>Bibliothèque médias</h2><p>{assets.length} fichier(s) · seuls les médias publiés apparaissent sur le site.</p></div><select value={filter} onChange={(event) => setFilter(event.target.value as MediaCategory | "all")}><option value="all">Tous les classements</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.label}</option>)}</select></div>
+            <div className="media-library-toolbar"><div><h2>Bibliothèque médias</h2><p>{assets.length} fichier(s) · seuls les médias publiés apparaissent sur le site.</p></div><div className="media-library-actions"><select value={filter} onChange={(event) => setFilter(event.target.value as MediaCategory | "all")}><option value="all">Tous les classements</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.label}</option>)}</select><button className="btn btn-secondary" type="button" disabled={importingProjectMedia} onClick={() => { void importProjectMediaToStorage(); }}>{importingProjectMedia ? <><LoaderCircle size={16} className="spin" /> Import {Math.min(Math.floor(projectImportProgress.current), projectImportProgress.total)}/{projectImportProgress.total}</> : <><UploadCloud size={16} /> Importer les médias du projet</>}</button></div></div>
+            {importingProjectMedia && <div className="media-progress project-media-progress"><span style={{ width: `${projectImportProgress.total ? Math.min(100, projectImportProgress.current / projectImportProgress.total * 100) : 0}%` }} /><small>{projectImportProgress.file} · les fichiers restent visibles pendant le transfert.</small></div>}
             <div className="media-admin-grid">
               {visibleAssets.map((asset) => {
-                const url = supabase?.storage.from("site-media").getPublicUrl(asset.storage_path).data.publicUrl ?? "";
+                const url = asset.storage_path.startsWith("local:")
+                  ? getLocalMediaUrl(asset.storage_path)
+                  : supabase?.storage.from("site-media").getPublicUrl(asset.storage_path).data.publicUrl ?? "";
                 const video = asset.mime_type.startsWith("video/");
                 return <article className="panel media-admin-card" key={asset.id}>
                   <div className="media-preview">{video ? <video src={url} controls preload="metadata" /> : <img src={url} alt={asset.alt_text || asset.title} loading="lazy" />}{video && <span><Film size={14} /> Vidéo</span>}</div>
@@ -354,6 +450,8 @@ export default function SiteContentPage() {
                     <input aria-label="Texte alternatif" placeholder="Description pour les lecteurs d’écran" defaultValue={asset.alt_text} onBlur={(event) => { if (event.target.value !== asset.alt_text) void updateAsset(asset, { alt_text: event.target.value }); }} />
                     <textarea aria-label="Description du média" rows={2} placeholder="Légende ou description publique" defaultValue={asset.description} onBlur={(event) => { if (event.target.value !== asset.description) void updateAsset(asset, { description: event.target.value }); }} />
                     <select aria-label="Classement" value={asset.category} onChange={(event) => { void updateAsset(asset, { category: event.target.value as MediaCategory }); }}>{categories.map((category) => <option key={category.id} value={category.id}>{category.label}</option>)}</select>
+                    {(asset.category === "construction" || asset.category === "architecture") && <input aria-label="Groupe de la galerie" placeholder="Nom du groupe de galerie" defaultValue={asset.collection_title} onBlur={(event) => { if (event.target.value !== asset.collection_title) void updateAsset(asset, { collection_title: event.target.value }); }} />}
+                    <input aria-label="Ordre d’affichage" type="number" min="0" defaultValue={asset.sort_order} onBlur={(event) => { const value = Number(event.target.value); if (value !== asset.sort_order) void updateAsset(asset, { sort_order: value }); }} />
                     <select aria-label="Service associé" value={asset.service_id ?? ""} onChange={(event) => { void updateAsset(asset, { service_id: event.target.value || null }); }}><option value="">Aucun service</option>{services.map((service) => <option key={service.id} value={service.id}>{service.title}</option>)}</select>
                     <label className="site-content-checkbox"><input type="checkbox" checked={asset.is_published} onChange={(event) => { void updateAsset(asset, { is_published: event.target.checked }); }} /> Visible sur le site</label>
                     <small>{formatBytes(asset.file_size)} · {serviceById.get(asset.service_id ?? "")?.title ?? "Bibliothèque"}</small>

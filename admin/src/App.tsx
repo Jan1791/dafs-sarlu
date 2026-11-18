@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, type ComponentType, type FormEven
 import type { Session } from "@supabase/supabase-js";
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import { supabase } from "./lib/supabase";
+import { getLocalMediaUrl } from "./media-url";
 import SiteContentPage from "./site-content";
 import {
   Activity,
@@ -165,7 +166,10 @@ type PlanRecord = {
   tone: "success" | "warning" | "neutral";
   image?: string;
   storagePath?: string;
+  gallery: { id: string; storagePath: string; url: string; sortOrder: number }[];
 };
+
+type PlanMediaRecord = { id: string; plan_id: string; storage_path: string; alt_text: string; sort_order: number };
 
 type PlanDraft = {
   title: string;
@@ -175,6 +179,8 @@ type PlanDraft = {
   bedrooms: string;
   floors: string;
   preview: File | null;
+  galleryFiles: File[];
+  removeGalleryIds: string[];
 };
 
 type InquiryRecord = {
@@ -808,7 +814,7 @@ function PlansPage({
                   <td><div className="property-cell"><div className="property-thumb">{plan.image ? <img src={plan.image} alt="" /> : <Layers3 size={18} />}</div><strong>{plan.title}</strong></div></td>
                   <td>{plan.ref}</td>
                   <td>{plan.category || "Non renseignée"}</td>
-                  <td>{plan.details || "Détails à renseigner"}</td>
+                  <td>{plan.details || "Détails à renseigner"}<br /><small>{plan.gallery.length} vue(s) complémentaire(s)</small></td>
                   <td><Badge tone={plan.tone}>{plan.status}</Badge></td>
                   <td><div className="row-actions">
                     <Button variant="icon" icon={Pencil} onClick={() => onEdit(plan)} title={`Modifier ${plan.title}`} />
@@ -901,7 +907,7 @@ function PlanModal({
       : plan?.details.match(/R\+(\d+)/)?.[1]
         ? String(Number(plan.details.match(/R\+(\d+)/)?.[1]) + 1)
         : "";
-    return { title: plan?.title ?? "", description: plan?.description ?? "", category: plan?.category ?? "", area, bedrooms, floors, preview: null };
+    return { title: plan?.title ?? "", description: plan?.description ?? "", category: plan?.category ?? "", area, bedrooms, floors, preview: null, galleryFiles: [], removeGalleryIds: [] };
   });
   const update = <K extends keyof PlanDraft>(key: K, value: PlanDraft[K]) =>
     setDraft((current) => ({ ...current, [key]: value }));
@@ -933,6 +939,8 @@ function PlanModal({
           <label><span>Chambres</span><input type="number" min="0" step="1" value={draft.bedrooms} onChange={(event) => update("bedrooms", event.target.value)} /></label>
           <label><span>Niveaux</span><input type="number" min="0" step="1" value={draft.floors} onChange={(event) => update("floors", event.target.value)} /></label>
           <label className="full-field"><span>Aperçu du plan (JPG, PNG ou WebP)</span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => update("preview", event.target.files?.[0] ?? null)} />{draft.preview && <small>{draft.preview.name}</small>}</label>
+          <label className="full-field"><span>Ajouter des vues à la galerie</span><input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={(event) => update("galleryFiles", [...draft.galleryFiles, ...Array.from(event.target.files ?? [])])} />{draft.galleryFiles.length > 0 && <small>{draft.galleryFiles.length} nouvelle(s) image(s) sélectionnée(s) : {draft.galleryFiles.map((file) => file.name).join(", ")}</small>}</label>
+          {!!plan?.gallery.length && <div className="full-field plan-gallery-admin"><span>Vues déjà enregistrées — {plan.gallery.length - draft.removeGalleryIds.length} conservée(s)</span><div>{plan.gallery.map((image, index) => <figure className={draft.removeGalleryIds.includes(image.id) ? "removed" : ""} key={image.id}><img src={image.url} alt={`Vue ${index + 1} de ${plan.title}`} /><button type="button" className="btn btn-ghost" onClick={() => update("removeGalleryIds", draft.removeGalleryIds.includes(image.id) ? draft.removeGalleryIds.filter((id) => id !== image.id) : [...draft.removeGalleryIds, image.id])}>{draft.removeGalleryIds.includes(image.id) ? "Conserver" : "Retirer"}</button></figure>)}</div></div>}
         </div>
         {error && <p className="form-error" role="alert">{error}</p>}
         <div className="modal-footer"><Button variant="ghost" onClick={close}>Annuler</Button><Button type="submit" disabled={saving}>{saving ? "Enregistrement…" : "Enregistrer comme brouillon"}</Button></div>
@@ -1706,7 +1714,9 @@ function App() {
         .maybeSingle();
       if (!active) return;
       if (profileError || !profile?.is_active) {
-        setAuthError("Ce compte n’est pas activé pour l’administration.");
+        setAuthError(profileError
+          ? `Le profil administrateur ne peut pas être vérifié (${profileError.message}). Vérifiez les migrations et les droits Supabase.`
+          : "Le compte existe, mais son profil n’est pas activé. Activez-le dans Supabase avant de vous connecter.");
         setIsAdmin(false);
         setAuthLoading(false);
         await client.auth.signOut();
@@ -1718,7 +1728,9 @@ function App() {
         .eq("user_id", session.user.id);
       if (!active) return;
       if (roleError || !assignedRoles?.length) {
-        setAuthError("Aucun rôle d’administration n’est attribué à ce compte.");
+        setAuthError(roleError
+          ? `Le rôle administrateur ne peut pas être vérifié (${roleError.message}). Vérifiez la migration et les politiques RLS Supabase.`
+          : "Aucun rôle d’administration n’est attribué à ce compte. Attribuez-lui le rôle admin ou super_admin dans Supabase.");
         setIsAdmin(false);
         setAuthLoading(false);
         await client.auth.signOut();
@@ -1784,7 +1796,7 @@ function App() {
         status,
         tone: status === "Publiée" ? "success" : status === "À valider" ? "warning" : "neutral",
         color: "image-one",
-        image: imagePath ? imagePath.startsWith("local:") ? imagePath.slice("local:".length) : client.storage.from("property-images").getPublicUrl(imagePath).data.publicUrl : undefined,
+        image: imagePath ? imagePath.startsWith("local:") ? getLocalMediaUrl(imagePath) : client.storage.from("property-images").getPublicUrl(imagePath).data.publicUrl : undefined,
         imagePath,
       };
     });
@@ -1797,7 +1809,7 @@ function App() {
     if (!client || !session) return;
     const { data, error } = await client
       .from("architectural_plans")
-      .select("id, reference, title, description, category, built_area_m2, bedrooms, floors, publication_status, preview_storage_path")
+      .select("id, reference, title, description, category, built_area_m2, bedrooms, floors, publication_status, preview_storage_path, architectural_plan_media(id, storage_path, sort_order)")
       .is("archived_at", null)
       .order("created_at", { ascending: false });
     if (error) {
@@ -1822,8 +1834,18 @@ function App() {
         tone: status === "Publié" ? "success" : "neutral",
         storagePath: row.preview_storage_path ?? undefined,
         image: row.preview_storage_path
-          ? client.storage.from("architectural-previews").getPublicUrl(row.preview_storage_path).data.publicUrl
+          ? row.preview_storage_path.startsWith("local:")
+            ? getLocalMediaUrl(row.preview_storage_path)
+            : client.storage.from("architectural-previews").getPublicUrl(row.preview_storage_path).data.publicUrl
           : undefined,
+        gallery: [...(row.architectural_plan_media ?? [])].sort((a: any, b: any) => a.sort_order - b.sort_order).map((media: any) => ({
+          id: media.id,
+          storagePath: media.storage_path,
+          url: media.storage_path.startsWith("local:")
+            ? getLocalMediaUrl(media.storage_path)
+            : client.storage.from("architectural-previews").getPublicUrl(media.storage_path).data.publicUrl,
+          sortOrder: media.sort_order,
+        })),
       };
     }));
   };
@@ -1905,15 +1927,28 @@ function App() {
     const id = planId ?? crypto.randomUUID();
     const existingPlan = managedPlans.find((item) => item.id === planId);
     let previewPath = existingPlan?.storagePath ?? null;
-    if (draft.preview) {
-      const safeName = draft.preview.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9._-]+/g, "-");
-      previewPath = `${id}/${crypto.randomUUID()}-${safeName}`;
-      const { error: uploadError } = await client.storage.from("architectural-previews").upload(previewPath, draft.preview, {
+    const uploadedPaths: string[] = [];
+    const uploadPlanImage = async (file: File) => {
+      const safeName = file.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9._-]+/g, "-");
+      const path = `${id}/${crypto.randomUUID()}-${safeName}`;
+      const { error: uploadError } = await client.storage.from("architectural-previews").upload(path, file, {
         cacheControl: "3600",
-        contentType: draft.preview.type,
+        contentType: file.type,
         upsert: false,
       });
-      if (uploadError) throw new Error("L’aperçu n’a pas pu être téléversé.");
+      if (uploadError) throw new Error(`L’image « ${file.name} » n’a pas pu être téléversée.`);
+      uploadedPaths.push(path);
+      return path;
+    };
+    if (draft.preview) {
+      previewPath = await uploadPlanImage(draft.preview);
+    }
+    const galleryPaths: string[] = [];
+    try {
+      for (const file of draft.galleryFiles) galleryPaths.push(await uploadPlanImage(file));
+    } catch (error) {
+      if (uploadedPaths.length) await client.storage.from("architectural-previews").remove(uploadedPaths);
+      throw error;
     }
     const slugBase = draft.title.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
     const planData = {
@@ -1937,10 +1972,30 @@ function App() {
           publication_status: "draft",
         });
     if (result.error) {
-      if (draft.preview && previewPath) await client.storage.from("architectural-previews").remove([previewPath]);
+      if (uploadedPaths.length) await client.storage.from("architectural-previews").remove(uploadedPaths);
       throw new Error("Le plan n’a pas pu être enregistré. Vérifiez les champs et les autorisations.");
     }
-    if (draft.preview && existingPlan?.storagePath) {
+    if (galleryPaths.length) {
+      const { error: galleryError } = await client.from("architectural_plan_media").insert(galleryPaths.map((storage_path, index) => ({
+        plan_id: id,
+        storage_path,
+        alt_text: `${draft.title.trim()} — vue ${index + 1}`,
+        sort_order: (existingPlan?.gallery.length ?? 0) + index,
+        created_by: session.user.id,
+      })));
+      if (galleryError) {
+        await client.storage.from("architectural-previews").remove(galleryPaths);
+        throw new Error("Les images ont été téléversées, mais la galerie n’a pas pu être enregistrée. Vérifiez la migration Supabase.");
+      }
+    }
+    const removedGallery = existingPlan?.gallery.filter((media) => draft.removeGalleryIds.includes(media.id)) ?? [];
+    if (removedGallery.length) {
+      const { error: deleteGalleryError } = await client.from("architectural_plan_media").delete().in("id", removedGallery.map((media) => media.id));
+      if (deleteGalleryError) throw new Error("Certaines vues n’ont pas pu être retirées de la galerie.");
+      const storagePaths = removedGallery.map((media) => media.storagePath).filter((path) => !path.startsWith("local:"));
+      if (storagePaths.length) await client.storage.from("architectural-previews").remove(storagePaths);
+    }
+    if (draft.preview && existingPlan?.storagePath && !existingPlan.storagePath.startsWith("local:")) {
       await client.storage.from("architectural-previews").remove([existingPlan.storagePath]);
     }
     await loadPlans();
@@ -1968,11 +2023,15 @@ function App() {
   const deletePlan = async (plan: PlanRecord) => {
     if (!supabase || !window.confirm(`Supprimer définitivement le plan « ${plan.title} » ?`)) return;
     setPropertiesError("");
+    const { data: galleryRows, error: galleryReadError } = await supabase.from("architectural_plan_media").select("storage_path").eq("plan_id", plan.id);
+    if (galleryReadError) { setPropertiesError("La galerie ne peut pas être chargée pour supprimer ce plan."); return; }
     const { error } = await supabase.from("architectural_plans").delete().eq("id", plan.id);
     if (error) { setPropertiesError("Le plan n’a pas pu être supprimé."); return; }
-    if (plan.storagePath) {
-      const { error: storageError } = await supabase.storage.from("architectural-previews").remove([plan.storagePath]);
-      if (storageError) setPropertiesError("Le plan est supprimé, mais son aperçu est resté dans Storage.");
+    const storagePaths = [plan.storagePath, ...(galleryRows ?? []).map((media) => media.storage_path)]
+      .filter((path): path is string => Boolean(path) && !path.startsWith("local:"));
+    if (storagePaths.length) {
+      const { error: storageError } = await supabase.storage.from("architectural-previews").remove(storagePaths);
+      if (storageError) setPropertiesError("Le plan est supprimé, mais certains fichiers sont restés dans Storage.");
     }
     await loadPlans();
   };
@@ -2008,13 +2067,26 @@ function App() {
     if (!supabase) throw new Error("La connexion Supabase n’est pas configurée.");
     setAuthPending(true);
     setAuthError("");
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-      options: captchaToken ? { captchaToken } : undefined,
-    });
-    setAuthPending(false);
-    if (error) throw new Error("Identifiants invalides ou connexion indisponible.");
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+        options: captchaToken ? { captchaToken } : undefined,
+      });
+      if (error) {
+        const message = error.message.toLowerCase();
+        if (message.includes("invalid login credentials")) throw new Error("Adresse e-mail ou mot de passe incorrect.");
+        if (message.includes("email not confirmed")) throw new Error("Cette adresse e-mail n’est pas confirmée. Confirmez-la dans Supabase Authentication → Users.");
+        if (message.includes("captcha") || message.includes("turnstile")) throw new Error("La vérification anti-robot a échoué. Vérifiez que le domaine de l’admin est autorisé dans Cloudflare et que la clé Turnstile Vercel correspond au widget Supabase.");
+        if (message.includes("too many requests")) throw new Error("Trop de tentatives. Attendez quelques minutes puis réessayez.");
+        throw new Error(`Supabase a refusé la connexion : ${error.message}`);
+      }
+    } catch (error) {
+      if (error instanceof Error && (error.message.includes("Supabase a refusé") || error.message.includes("incorrect") || error.message.includes("confirmée") || error.message.includes("anti-robot") || error.message.includes("Trop de tentatives"))) throw error;
+      throw new Error(`Le service de connexion Supabase est injoignable. Vérifiez les variables NEXT_PUBLIC_SUPABASE_URL et NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY dans Vercel. ${error instanceof Error ? error.message : ""}`.trim());
+    } finally {
+      setAuthPending(false);
+    }
   };
 
   const saveProperty = async (draft: PropertyDraft, propertyId?: string) => {
