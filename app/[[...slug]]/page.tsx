@@ -200,18 +200,22 @@ async function loadPublishedContent(): Promise<{
         mediaByService.set(asset.service_id, items);
       }
     }
-    const services: PublicService[] = serviceResult.error || !serviceResult.data?.length ? fallbackServices : serviceResult.data.map((service) => ({
-      id: service.id,
-      slug: service.slug,
-      title: service.title,
-      eyebrow: service.eyebrow ?? "",
-      summary: service.summary ?? "",
-      body: service.body?.trim() || fallbackServices.find((fallback) => fallback.slug === service.slug)?.body || "",
-      features: Array.isArray(service.features) && service.features.length
-        ? service.features.filter((item): item is string => typeof item === "string")
-        : fallbackServices.find((fallback) => fallback.slug === service.slug)?.features ?? [],
-      media: mediaByService.get(service.id) ?? [],
-    }));
+    const services: PublicService[] = serviceResult.error || !serviceResult.data?.length ? fallbackServices : serviceResult.data.map((service) => {
+      const fallback = fallbackServices.find((item) => item.slug === service.slug);
+      const publishedMedia = mediaByService.get(service.id) ?? [];
+      return {
+        id: service.id,
+        slug: service.slug,
+        title: service.title,
+        eyebrow: service.eyebrow ?? "",
+        summary: service.summary ?? "",
+        body: service.body?.trim() || fallback?.body || "",
+        features: Array.isArray(service.features) && service.features.length
+          ? service.features.filter((item): item is string => typeof item === "string")
+          : fallback?.features ?? [],
+        media: publishedMedia.length ? publishedMedia : fallback?.media ?? [],
+      };
+    });
     return { properties, plans, settings, services, error: false };
   } catch {
     return { properties: starterProperties, plans: [], settings: defaultSettings, services: fallbackServices, error: true };

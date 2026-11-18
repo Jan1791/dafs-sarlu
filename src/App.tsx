@@ -271,6 +271,31 @@ export type PropertyListing = {
   images: { src: string; alt: string; caption: string; mimeType?: string }[];
 };
 
+function newsListingImages(slug: string, photoCount: number, videoCount: number, location: string) {
+  const base = `/property-media/news/${slug}`;
+  const photos = Array.from({ length: photoCount }, (_, index) => ({
+    src: `${base}/photo-${String(index + 1).padStart(2, "0")}.jpg`,
+    alt: `Bien immobilier à ${location} — vue ${index + 1}`,
+    caption: `Photo ${String(index + 1).padStart(2, "0")} de l’annonce`,
+  }));
+  const videos = Array.from({ length: videoCount }, (_, index) => ({
+    src: `${base}/visite-${String(index + 1).padStart(2, "0")}.mp4`,
+    alt: `Visite vidéo du bien à ${location}`,
+    caption: `Vidéo de visite du bien à ${location}`,
+    mimeType: "video/mp4",
+  }));
+  return photos.length
+    ? [...photos, ...videos]
+    : [
+        {
+          src: `${base}/cover.jpg`,
+          alt: `Aperçu du bien à ${location}, extrait de la vidéo fournie`,
+          caption: "Aperçu extrait de la vidéo de visite",
+        },
+        ...videos,
+      ];
+}
+
 const kinshasaSeedListingImage = (path: string, alt: string) => ({
   src: path,
   alt,
@@ -361,6 +386,88 @@ export const starterProperties: PropertyListing[] = [
       { src: "/property-media/ngaliema/ngaliema-tour.mp4", alt: "Visite vidéo du bien à Ngaliema", caption: "Visite vidéo fournie pour le bien", mimeType: "video/mp4" },
     ],
   },
+  {
+    id: "00000000-0000-4000-8000-000000000201",
+    reference: "DAFS-KTN-001",
+    name: "Parcelle à vendre à Kintambo",
+    city: "Kinshasa, Kintambo",
+    type: "Parcelle · Vente",
+    meta: "195 m² · 7,80 m × 25 m",
+    price: "215 000 $US · prix annoncé ferme",
+    priceAmount: 215000,
+    currency: "USD",
+    pricingPeriod: "fixed",
+    image: "/property-media/news/kintambo/cover.jpg",
+    description: "Parcelle à vendre dans la commune de Kintambo, à un emplacement présenté comme idéal par l’annonceur. Dimensions annoncées : 7,80 m × 25 m (environ 195 m²). Prix annoncé : 215 000 USD, indiqué comme le dernier prix. Les documents sont décrits comme « normaux » dans l’annonce ; leur nature et leur validité sont à vérifier auprès du vendeur. Adresse exacte à compléter.",
+    bedrooms: null,
+    bathrooms: null,
+    livingArea: null,
+    landArea: 195,
+    address: "Commune de Kintambo · adresse exacte à préciser",
+    images: newsListingImages("kintambo", 0, 1, "Kintambo"),
+  },
+  {
+    id: "00000000-0000-4000-8000-000000000202",
+    reference: "DAFS-NGO-001",
+    name: "Parcelle à vendre à Binza Ozone, Cent-Casier",
+    city: "Kinshasa, Ngaliema, Binza Ozone",
+    type: "Parcelle · Vente",
+    meta: "320 m² · 16 m × 20 m · divisible selon l’annonce",
+    price: "300 000 $US · légèrement négociable",
+    priceAmount: 300000,
+    currency: "USD",
+    pricingPeriod: "fixed",
+    image: "/property-media/news/ngaliema-binza-ozone-cent-casier/cover.jpg",
+    description: "Parcelle à vendre dans le quartier de Binza Ozone, référence Cent-Casier, sur une avenue asphaltée selon l’annonce. Dimensions annoncées : 16 m × 20 m (environ 320 m²). Le vendeur indique une possibilité de division en deux lots et mentionne également des dimensions de 8 m × 24 m à 150 000 USD par lot ; ces mesures sont à confirmer. Prix annoncé pour la parcelle : 300 000 USD, légèrement négociable. Certificat d’enregistrement annoncé, à vérifier. Visite sur demande.",
+    bedrooms: null,
+    bathrooms: null,
+    livingArea: null,
+    landArea: 320,
+    address: "Référence Cent-Casier · adresse exacte à confirmer",
+    images: newsListingImages("ngaliema-binza-ozone-cent-casier", 0, 1, "Binza Ozone, Cent-Casier"),
+  },
+  {
+    id: "00000000-0000-4000-8000-000000000203",
+    reference: "DAFS-NGT-001",
+    name: "Maison de 2 chambres à Ngaliema, Champ de Tir",
+    city: "Kinshasa, Ngaliema, Binza Ozone",
+    type: "Maison · Vente",
+    meta: "Parcelle de 180 m² · 2 chambres",
+    price: "150 000 $US · à discuter",
+    priceAmount: 150000,
+    isNegotiable: true,
+    currency: "USD",
+    pricingPeriod: "fixed",
+    image: "/property-media/news/ngaliema-champ-tir-binza-ozone/cover.jpg",
+    description: "Maison avec parcelle à vendre dans le secteur Champ de Tir, à Binza Ozone, commune de Ngaliema. Référence communiquée : école Sévigné ; la parcelle se trouverait près du macadam. Dimensions annoncées : 12 m × 15 m (environ 180 m²). La maison comprendrait 2 chambres. Prix de départ annoncé : 150 000 USD, à discuter. Documents annoncés complets, à vérifier auprès du vendeur. Adresse exacte à confirmer.",
+    bedrooms: 2,
+    bathrooms: null,
+    livingArea: null,
+    landArea: 180,
+    address: "Secteur Champ de Tir · référence école Sévigné · adresse exacte à confirmer",
+    images: newsListingImages("ngaliema-champ-tir-binza-ozone", 0, 1, "Ngaliema, Champ de Tir"),
+  },
+  {
+    id: "00000000-0000-4000-8000-000000000204",
+    reference: "DAFS-NGO-002",
+    name: "Maison de 5 chambres à Ngaliema, Ozone Champ de Tir",
+    city: "Kinshasa, Ngaliema, Ozone Champ de Tir",
+    type: "Maison · Vente",
+    meta: "Parcelle de 500 m² · 5 chambres · salon",
+    price: "500 000 $US · à discuter",
+    priceAmount: 500000,
+    isNegotiable: true,
+    currency: "USD",
+    pricingPeriod: "fixed",
+    image: "/property-media/news/ngaliema-ozone-champ-tir/cover.jpg",
+    description: "Parcelle à vendre à Ngaliema, dans le secteur Ozone Champ de Tir. Dimensions annoncées : 25 m × 20 m (environ 500 m²). Une maison comprenant 5 chambres et un salon est mentionnée ; les autres pièces et caractéristiques restent à préciser. Prix annoncé : 500 000 USD, à discuter. Certificat d’enregistrement annoncé, à vérifier. Visite sur rendez-vous téléphonique. Adresse exacte à compléter.",
+    bedrooms: 5,
+    bathrooms: null,
+    livingArea: null,
+    landArea: 500,
+    address: "Ngaliema, secteur Ozone Champ de Tir · adresse exacte à confirmer",
+    images: newsListingImages("ngaliema-ozone-champ-tir", 4, 1, "Ngaliema, Ozone Champ de Tir"),
+  },
 ];
 
 function propertyTarget(type: string): Page {
@@ -371,8 +478,34 @@ function propertyTarget(type: string): Page {
 }
 
 export type ArchitecturalPlan = { id: string; reference: string; name: string; meta: string; image: string; description: string; category: string };
-export type ServiceMedia = { id: string; title: string; description: string; url: string; alt: string; mimeType: string };
+export type ServiceMedia = { id: string; title: string; description: string; url: string; alt: string; mimeType: string; poster?: string };
 export type PublicService = { id: string; slug: string; title: string; eyebrow: string; summary: string; body: string; features: string[]; media: ServiceMedia[] };
+
+const movingServiceMedia: ServiceMedia[] = [
+  ...Array.from({ length: 24 }, (_, index) => {
+    const number = String(index + 1).padStart(2, "0");
+    return {
+      id: `moving-photo-${number}`,
+      title: `Photo d’intervention ${number}`,
+      description: `Photo ${number} fournie pour présenter le service de déménagement et d’aménagement.`,
+      url: `/service-media/moving/photos/photo-${number}.jpg`,
+      alt: `Déménagement et aménagement — photo ${number}`,
+      mimeType: "image/jpeg",
+    };
+  }),
+  ...Array.from({ length: 11 }, (_, index) => {
+    const number = String(index + 1).padStart(2, "0");
+    return {
+      id: `moving-video-${number}`,
+      title: `Vidéo d’intervention ${number}`,
+      description: `Vidéo ${number} fournie pour présenter le service de déménagement et d’aménagement.`,
+      url: `/service-media/moving/videos/video-${number}.mp4`,
+      alt: `Déménagement et aménagement — vidéo ${number}`,
+      mimeType: "video/mp4",
+      poster: `/service-media/moving/posters/video-${number}.jpg`,
+    };
+  }),
+];
 
 export const starterPublicServices: PublicService[] = [
   {
@@ -380,7 +513,7 @@ export const starterPublicServices: PublicService[] = [
     eyebrow: "Déménagement et organisation des espaces",
     summary: "Un accompagnement pour préparer votre déménagement et aménager vos espaces selon vos besoins.",
     body: "DAFS Sarlu propose un accompagnement pour organiser un déménagement et préparer l’installation dans un nouvel espace. Chaque demande commence par la compréhension des lieux concernés, du volume à déplacer, des dates souhaitées et du résultat attendu.\n\nSelon le périmètre retenu avec l’entreprise, le projet peut inclure la préparation logistique, le déplacement des biens, leur installation ou une réflexion sur l’agencement. Les tâches exactes, les moyens de transport et de manutention, les fournitures, les accès et les éventuelles exclusions doivent être confirmés avant toute intervention.\n\nPour l’aménagement, décrivez l’usage de la pièce, les meubles ou équipements concernés, les contraintes du lieu et vos priorités. DAFS Sarlu pourra préciser les options qu’elle est en mesure de prendre en charge, les délais possibles et les modalités de la prestation.",
-    features: ["Préparer l’organisation du déménagement selon le besoin communiqué.", "Étudier l’installation et l’agencement de l’espace selon le périmètre convenu.", "Confirmer les moyens, les dates, les tâches et le prix avant l’intervention."], media: [],
+    features: ["Préparer l’organisation du déménagement selon le besoin communiqué.", "Étudier l’installation et l’agencement de l’espace selon le périmètre convenu.", "Confirmer les moyens, les dates, les tâches et le prix avant l’intervention."], media: movingServiceMedia,
   },
   {
     id: "fallback-cleaner", slug: "cleaner", title: "Cleaner", eyebrow: "Service de nettoyage",
@@ -682,10 +815,15 @@ function PublicServicePage({ service, go, settings }: { service: PublicService; 
       </div>
       {service.media.length > 0 ? (
         <section className="public-service-media" aria-label={`Médias : ${service.title}`}>
+          <header className="public-service-media-heading">
+            <span className="eyebrow">Galerie de réalisations</span>
+            <h2>Photos et vidéos</h2>
+            <p>Découvrez en images le service {service.title}.</p>
+          </header>
           {service.media.map((asset) =>
             asset.mimeType.startsWith("video/") ? (
               <figure key={asset.id}>
-                <video controls preload="metadata" src={asset.url} aria-label={asset.title} />
+                <video controls preload="none" src={asset.url} poster={asset.poster} aria-label={asset.title} />
                 <figcaption>{asset.description || asset.title}</figcaption>
               </figure>
             ) : (
@@ -1864,6 +2002,7 @@ export default function App({
       }
       setServices(serviceResult.data.map((service) => {
         const starter = starterPublicServices.find((item) => item.slug === service.slug);
+        const publishedMedia = mediaByService.get(service.id) ?? [];
         return ({
         id: service.id,
         slug: service.slug,
@@ -1874,7 +2013,7 @@ export default function App({
         features: Array.isArray(service.features) && service.features.length
           ? service.features.filter((item): item is string => typeof item === "string")
           : starter?.features ?? [],
-        media: mediaByService.get(service.id) ?? [],
+        media: publishedMedia.length ? publishedMedia : starter?.media ?? [],
       });
       }));
     };

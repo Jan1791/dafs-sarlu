@@ -17,6 +17,7 @@ Dans le tableau de bord Supabase, ouvrir **SQL Editor** et exécuter les fichier
 9. `migrations/202611170005_remove_old_public_phone.sql` retire l’ancien numéro des coordonnées publiques et de la page légale sans écraser les autres réglages.
 10. `migrations/202611170006_homepage_title.sql` met à jour le titre de la page d’accueil.
 11. `migrations/202611170007_restore_company_name_home_title.sql` conserve « DAFS Sarlu » et ajoute « Agence immobilière » au titre.
+12. `migrations/202611180001_news_property_listings.sql` ajoute les quatre annonces du dossier `src/img/A-VENDRE/NEWS` et leurs galeries de photos/vidéos.
 
 ## Créer le premier compte administrateur
 
@@ -49,7 +50,7 @@ Après les quatre migrations initiales, exécuter la migration `202611170001_ser
 
 Pour les migrations de contenu ajoutées par la suite, exécuter chaque fichier numéroté suivant une seule fois et dans l’ordre. Le texte affiché par le site reste modifiable dans l’espace admin après l’application des migrations.
 
-Les médias locaux de `src/img` ne sont pas dans Git et ne sont pas automatiquement présents dans Supabase. Depuis **Admin → Services & médias → Bibliothèque médias**, sélectionnez le dossier `src/img` pour importer son contenu. `AMENAGEMENT`, `CONSTRUCTION`, `PLAN-3D` et `LOGO` sont classés à partir de leurs noms de dossier ; vérifiez chaque fiche et sa visibilité avant publication. Le lot fourni comprend environ 192 Mo : l’import dépend aussi de l’espace Storage disponible dans le projet.
+Les fichiers sources de `src/img` ne sont pas versionnés. Les médias retenus pour les annonces `A-VENDRE/NEWS` et le service `AMENAGEMENT` sont normalisés et versionnés dans `public/property-media/news` et `public/service-media/moving` pour l’affichage public. Les quatre annonces sont enregistrées par la migration 12. Pour pouvoir ensuite gérer les médias d’aménagement depuis **Admin → Services & médias → Bibliothèque médias**, il faudra importer le dossier correspondant dans Supabase Storage puis retirer le secours statique du site.
 
 L’inspection des aperçus classe `AMENAGEMENT` comme déménagement/aménagement, `CONSTRUCTION` comme chantier et `PLAN-3D` comme architecture. Aucun lot n’identifie clairement des opérations de nettoyage : les photos de cette catégorie doivent être confirmées par le client avant d’être associées à Cleaner et publiées.
 
