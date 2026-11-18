@@ -16,6 +16,7 @@ Dans le tableau de bord Supabase, ouvrir **SQL Editor** et exécuter les fichier
 8. `migrations/202611170004_expand_public_service_copy.sql` développe les textes initiaux de Déménagement & aménagement et Cleaner en conservant les versions déjà modifiées dans l’admin.
 9. `migrations/202611170005_remove_old_public_phone.sql` retire l’ancien numéro des coordonnées publiques et de la page légale sans écraser les autres réglages.
 10. `migrations/202611170006_homepage_title.sql` met à jour le titre de la page d’accueil.
+11. `migrations/202611170007_restore_company_name_home_title.sql` conserve « DAFS Sarlu » et ajoute « Agence immobilière » au titre.
 
 ## Créer le premier compte administrateur
 

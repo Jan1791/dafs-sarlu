@@ -3,7 +3,7 @@ import "../src/index.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
-  title: "DAFS Sarlu | Immobilier, architecture et services",
+  title: "DAFS Sarlu | Agence Immobilière, architecture et services",
   description: "Locations, maisons et parcelles à vendre, plans architecturaux, déménagement, aménagement et nettoyage proposés par DAFS Sarlu.",
 };
 
