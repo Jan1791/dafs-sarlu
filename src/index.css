@@ -544,6 +544,12 @@ textarea {
   font-size: 12px;
   font-weight: 600;
 }
+.split-heading > .text-link {
+  padding: 11px 16px;
+  border: 1px solid #F08A00;
+  border-radius: 999px;
+  white-space: nowrap;
+}
 .property-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -565,6 +571,7 @@ textarea {
   position: relative;
   overflow: hidden;
   background: #ddd;
+  border-radius: 12px 12px 0 0;
 }
 .card-image img {
   width: 100%;
@@ -1386,6 +1393,7 @@ footer {
   border: 0;
   position: relative;
   overflow: hidden;
+  border-radius: 12px 12px 0 0;
 }
 .plan-image img {
   width: 100%;
