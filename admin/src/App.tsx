@@ -39,6 +39,7 @@ import {
   Menu,
   MessageSquareText,
   MoreHorizontal,
+  Moon,
   Pencil,
   Plus,
   Search,
@@ -46,6 +47,7 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   Sparkles,
+  Sun,
   TrendingUp,
   Trash2,
   UserRound,
@@ -54,6 +56,7 @@ import {
 } from "lucide-react";
 
 type Icon = ComponentType<{ size?: number; strokeWidth?: number; className?: string }>;
+type AdminTheme = "light" | "dark";
 type Page =
   | "dashboard"
   | "properties"
@@ -246,6 +249,24 @@ function Button({
   );
 }
 
+function ThemeToggle({ theme, onToggle, className = "" }: { theme: AdminTheme; onToggle: () => void; className?: string }) {
+  const isDark = theme === "dark";
+  const ToggleIcon = isDark ? Sun : Moon;
+  const label = isDark ? "Passer au thème jour" : "Passer au thème nuit";
+  return (
+    <button
+      type="button"
+      className={`theme-toggle ${className}`}
+      aria-label={label}
+      aria-pressed={isDark}
+      title={label}
+      onClick={onToggle}
+    >
+      <ToggleIcon size={18} />
+    </button>
+  );
+}
+
 function Badge({ children, tone = "neutral" }: { children: ReactNode; tone?: string }) {
   return (
     <span className={`badge badge-${tone}`}>
@@ -318,7 +339,7 @@ function Sidebar({
           </div>
           <div>
             <strong>DAFS</strong>
-            <span>SERVICES</span>
+            <span>SARLU</span>
           </div>
           <Button variant="icon" icon={X} className="sidebar-close" onClick={close} />
         </div>
@@ -380,10 +401,14 @@ function Topbar({
   page,
   openMenu,
   openNotifications,
+  theme,
+  onToggleTheme,
 }: {
   page: Page;
   openMenu: () => void;
   openNotifications: () => void;
+  theme: AdminTheme;
+  onToggleTheme: () => void;
 }) {
   return (
     <header className="topbar">
@@ -414,6 +439,7 @@ function Topbar({
         >
           Voir le site
         </Button>
+        <ThemeToggle theme={theme} onToggle={onToggleTheme} />
         <button className="notification-button" onClick={openNotifications}>
           <Bell size={19} />
         </button>
@@ -451,7 +477,7 @@ function Dashboard({
         <div>
           <p className="eyebrow">ESPACE D’ADMINISTRATION</p>
           <h1>Tableau de bord</h1>
-          <span>Ajoutez les premiers contenus de DAFS Services.</span>
+          <span>Ajoutez les premiers contenus de DAFS Sarlu.</span>
         </div>
         <div className="welcome-actions">
           <Button icon={Plus} onClick={onAdd}>Ajouter une propriété</Button>
@@ -612,7 +638,7 @@ function PropertyPage({
       <ListHeader
         eyebrow="PORTEFEUILLE IMMOBILIER"
         title="Toutes les propriétés"
-        description="Gérez les logements, maisons et parcelles de DAFS Services."
+        description="Gérez les logements, maisons et parcelles de DAFS Sarlu."
         action="Ajouter une propriété"
         onAction={onAdd}
       />
@@ -795,7 +821,7 @@ function PlansPage({
       <ListHeader
         eyebrow="ARCHITECTURE"
         title="Plans architecturaux"
-        description="Ajoutez les plans et aperçus que DAFS Services souhaite présenter."
+        description="Ajoutez les plans et aperçus que DAFS Sarlu souhaite présenter."
         action="Ajouter un plan"
         onAction={onAdd}
       />
@@ -975,7 +1001,7 @@ const sectionData: Record<
   },
   plans: {
     eyebrow: "ARCHITECTURE",
-    description: "Ajoutez les plans et fichiers que DAFS Services souhaite publier.",
+    description: "Ajoutez les plans et fichiers que DAFS Sarlu souhaite publier.",
     action: "Ajouter un plan",
     cards: [
       { label: "Plans publiés", value: "0", note: "Aucune donnée" },
@@ -1161,7 +1187,7 @@ function SettingsPage({
       <ListHeader
         eyebrow="CONFIGURATION"
         title="Paramètres généraux"
-        description="Gérez l’identité, les coordonnées et les préférences de DAFS Services."
+        description="Gérez l’identité, les coordonnées et les préférences de DAFS Sarlu."
         action="Enregistrer"
         icon={Check}
         onAction={() => { void save(); }}
@@ -1199,7 +1225,7 @@ function SettingsPage({
             </label>
             <label className="full-field">
               <span>Introduction de la page d’accueil</span>
-              <textarea maxLength={500} rows={3} value={draft.home_intro} onChange={(event) => update("home_intro", event.target.value)} placeholder="Présentez l’offre DAFS Services en quelques lignes." />
+              <textarea maxLength={500} rows={3} value={draft.home_intro} onChange={(event) => update("home_intro", event.target.value)} placeholder="Présentez l’offre DAFS Sarlu en quelques lignes." />
             </label>
           </div>
           <div className="form-grid">
@@ -1233,7 +1259,7 @@ function SettingsPage({
             </label>
             <label className="full-field">
               <span>Titre de la page « À propos »</span>
-              <input maxLength={180} value={draft.about_title} onChange={(event) => update("about_title", event.target.value)} placeholder="À propos de DAFS Services" />
+              <input maxLength={180} value={draft.about_title} onChange={(event) => update("about_title", event.target.value)} placeholder="À propos de DAFS Sarlu" />
             </label>
             <label className="full-field">
               <span>Présentation de l’entreprise</span>
@@ -1245,7 +1271,7 @@ function SettingsPage({
             </label>
             <label className="full-field">
               <span>Informations légales</span>
-              <textarea maxLength={10000} rows={6} value={draft.legal_content} onChange={(event) => update("legal_content", event.target.value)} placeholder="Saisissez les informations légales validées par DAFS Services." />
+              <textarea maxLength={10000} rows={6} value={draft.legal_content} onChange={(event) => update("legal_content", event.target.value)} placeholder="Saisissez les informations légales validées par DAFS Sarlu." />
             </label>
           </div>
           {error && <p className="auth-error" role="alert">{error}</p>}
@@ -1577,10 +1603,14 @@ function AdminAccess({
   pending,
   error,
   onSignIn,
+  theme,
+  onToggleTheme,
 }: {
   pending: boolean;
   error: string;
   onSignIn: (email: string, password: string, captchaToken?: string) => Promise<void>;
+  theme: AdminTheme;
+  onToggleTheme: () => void;
 }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -1607,9 +1637,10 @@ function AdminAccess({
 
   return (
     <main className="admin-auth-screen">
+      <ThemeToggle theme={theme} onToggle={onToggleTheme} className="auth-theme-toggle" />
       <section className="admin-auth-card">
         <div className="admin-auth-mark"><Building2 size={25} /></div>
-        <p className="eyebrow">DAFS SERVICES</p>
+        <p className="eyebrow">DAFS SARLU</p>
         <h1>Administration</h1>
         {!supabase ? (
           <p className="auth-message">La connexion à Supabase n’est pas configurée dans cet environnement.</p>
@@ -1642,12 +1673,14 @@ function AdminAccess({
 }
 
 function App() {
+  const [theme, setTheme] = useState<AdminTheme>("light");
+  const [themeLoaded, setThemeLoaded] = useState(false);
   const [page, setPage] = useState<Page>("dashboard");
   const [managedProperties, setManagedProperties] = useState<PropertyRecord[]>(properties);
   const [managedPlans, setManagedPlans] = useState<PlanRecord[]>([]);
   const [managedInquiries, setManagedInquiries] = useState<InquiryRecord[]>([]);
   const [companySettings, setCompanySettings] = useState<CompanySettings>({
-    company_name: "DAFS SERVICES",
+    company_name: "DAFS Sarlu",
     legal_name: "",
     description: "",
     email: "",
@@ -1674,6 +1707,19 @@ function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [authPending, setAuthPending] = useState(false);
   const [authError, setAuthError] = useState("");
+
+  useEffect(() => {
+    const savedTheme = window.localStorage.getItem("dafs-admin-theme");
+    if (savedTheme === "light" || savedTheme === "dark") setTheme(savedTheme);
+    setThemeLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!themeLoaded) return;
+    document.documentElement.dataset.adminTheme = theme;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "dark" ? "#0B1320" : "#0D3D73");
+    window.localStorage.setItem("dafs-admin-theme", theme);
+  }, [theme, themeLoaded]);
 
   useEffect(() => {
     const client = supabase;
@@ -1896,7 +1942,7 @@ function App() {
     }
     const values = (data?.settings ?? {}) as Partial<CompanySettings>;
     setCompanySettings({
-      company_name: values.company_name || "DAFS SERVICES",
+      company_name: values.company_name || "DAFS Sarlu",
       legal_name: values.legal_name || "",
       description: values.description || "",
       email: values.email || "",
@@ -2254,10 +2300,23 @@ function App() {
   }, [page, managedProperties, managedPlans, managedInquiries, companySettings]);
 
   if (authLoading) {
-    return <main className="admin-auth-screen"><div className="admin-auth-card">Connexion à l’espace d’administration…</div></main>;
+    return (
+      <main className="admin-auth-screen">
+        <ThemeToggle theme={theme} onToggle={() => setTheme((current) => current === "light" ? "dark" : "light")} className="auth-theme-toggle" />
+        <div className="admin-auth-card">Connexion à l’espace d’administration…</div>
+      </main>
+    );
   }
   if (!isAdmin) {
-    return <AdminAccess pending={authPending} error={authError} onSignIn={handleSignIn} />;
+    return (
+      <AdminAccess
+        pending={authPending}
+        error={authError}
+        onSignIn={handleSignIn}
+        theme={theme}
+        onToggleTheme={() => setTheme((current) => current === "light" ? "dark" : "light")}
+      />
+    );
   }
 
   return (
@@ -2274,6 +2333,8 @@ function App() {
           page={page}
           openMenu={() => setSidebarOpen(true)}
           openNotifications={() => setNotificationsOpen(true)}
+          theme={theme}
+          onToggleTheme={() => setTheme((current) => current === "light" ? "dark" : "light")}
         />
         {propertiesError && <div className="data-error" role="alert">{propertiesError}</div>}
         {propertiesLoading && <div className="data-loading">Chargement des annonces…</div>}

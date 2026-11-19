@@ -5,8 +5,8 @@ import { InstallAppButton, PwaRegistration } from "../src/pwa";
 
 export const metadata: Metadata = {
   applicationName: "DAFS Sarlu Admin",
-  title: "DAFS Services | Administration",
-  description: "Espace d’administration DAFS Services.",
+  title: "DAFS Sarlu | Administration",
+  description: "Espace d’administration DAFS Sarlu.",
   robots: { index: false, follow: false },
   manifest: "/manifest.webmanifest",
   icons: {
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#14263D",
+  themeColor: "#0D3D73",
   width: "device-width",
   initialScale: 1,
 };
