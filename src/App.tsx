@@ -670,10 +670,12 @@ function Logo({ light = false, onClick }: { light?: boolean; onClick?: () => voi
   return (
     <button className={`logo${light ? " logo-footer" : ""}`} aria-label="DAFS Sarlu, agence immobilière, accueil" onClick={onClick}>
       <img className="logo-image" src="/brand/dafs-sarlu-logo.jpeg" alt="DAFS Sarlu" />
-      <span className="logo-descriptor" aria-hidden="true">
-        <span>Agence</span>
-        <strong>immobilière</strong>
-      </span>
+      {!light && (
+        <span className="logo-descriptor" aria-hidden="true">
+          <span>Agence</span>
+          <strong>immobilière</strong>
+        </span>
+      )}
     </button>
   );
 }
