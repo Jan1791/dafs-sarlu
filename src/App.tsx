@@ -1003,13 +1003,11 @@ function HomePage({
           <span className="hero-kicker hero-services">
             <span /> Immobilier - Architecture - Déménagement &amp; Aménagement - Cleaner.
           </span>
-          <h1 className="hero-brand-name">DAFS Sarlu</h1>
-          <p className="hero-brand-tagline">Agence immobilière au service de vos projets.</p>
-          <h2 className="hero-home-title">
+          <h1 className="hero-home-title">
             {settings.home_title?.split("\n")[0] || "Trouvez votre espace."}
             <br />
             <em>{settings.home_title?.split("\n").slice(1).join(" ") || "Imaginez votre avenir."}</em>
-          </h2>
+          </h1>
           <p>
             {settings.home_intro || "Immobilier, architecture et services : découvrez les offres publiées par DAFS Sarlu et trouvez l’accompagnement adapté à votre projet."}
           </p>

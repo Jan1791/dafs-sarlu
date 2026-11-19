@@ -275,29 +275,15 @@ textarea:focus-visible {
   text-transform: none;
 }
 .hero-services span { flex: 0 0 36px; border-color: var(--brand-orange); }
-.hero-brand-name {
-  margin: 9px 0 3px !important;
-  color: var(--brand-orange);
-  font-size: clamp(42px, 4.6vw, 62px) !important;
-  line-height: 1.05 !important;
-  font-weight: 700 !important;
-}
-.hero-content > .hero-brand-tagline {
-  margin: 0 0 18px;
-  color: var(--brand-orange);
-  font-size: clamp(15px, 1.5vw, 19px);
-  font-weight: 600;
-  line-height: 1.4;
-}
-.hero-home-title {
+.hero h1.hero-home-title {
   max-width: 690px;
-  margin: 0 0 18px;
-  color: #fff;
+  margin: 24px 0 18px;
+  color: var(--brand-orange);
   font-size: clamp(38px, 4.4vw, 60px);
   line-height: 1.08;
   font-weight: 600;
 }
-.hero-home-title em { color: #dbc195; font-style: normal; }
+.hero h1.hero-home-title em { color: inherit; font-style: normal; }
 .hero h1 {
   font-size: clamp(48px, 5.5vw, 78px);
   line-height: 1.07;
@@ -3206,9 +3192,7 @@ footer {
   .hero-kicker { font-size: 9px; letter-spacing: .13em; }
   .hero-services { gap: 8px; font-size: 11px; letter-spacing: 0; }
   .hero-services span { flex-basis: 18px; width: 18px; margin-top: 7px; }
-  .hero-brand-name { margin: 8px 0 3px !important; font-size: 40px !important; }
-  .hero-content > .hero-brand-tagline { margin-bottom: 16px; font-size: 14px; }
-  .hero-home-title { margin-bottom: 14px; font-size: clamp(34px, 9vw, 48px); }
+  .hero h1.hero-home-title { margin-bottom: 14px; font-size: clamp(34px, 9vw, 48px); }
   .hero-count { display: none; }
   .search-wrap { margin-top: -35px; }
   .quick-search { grid-template-columns: 1fr; padding: 10px; border-radius: 12px; }
@@ -3354,14 +3338,13 @@ footer {
 .app[data-theme="dark"] .logo-descriptor strong { color: #FFAE42; }
 .app[data-theme="dark"] .hero-services,
 .app[data-theme="dark"] .hero-services span,
-.app[data-theme="dark"] .hero-brand-name,
-.app[data-theme="dark"] .hero-brand-tagline,
 .app[data-theme="dark"] .category-num,
 .app[data-theme="dark"] .category-over,
 .app[data-theme="dark"] .eyebrow,
 .app[data-theme="dark"] .temporary,
 .app[data-theme="dark"] .system-code,
 .app[data-theme="dark"] .mission-grid article > span { color: #FFAE42; }
+.app[data-theme="dark"] .hero h1.hero-home-title { color: #FFAE42; }
 .app[data-theme="dark"] .estimate-banner,
 .app[data-theme="dark"] .arch-number { color: #0D3D73; }
 .app[data-theme="dark"] .estimate-banner :where(h1, h2, h3, h4, p, small, span, strong),
