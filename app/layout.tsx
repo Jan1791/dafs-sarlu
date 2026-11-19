@@ -6,8 +6,8 @@ import { InstallAppButton, PwaRegistration } from "../src/pwa";
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
   applicationName: "DAFS Sarlu",
-  title: "DAFS Sarlu | Agence Immobilière, architecture et services",
-  description: "Locations, maisons et parcelles à vendre, plans architecturaux, déménagement, aménagement et nettoyage proposés par DAFS Sarlu.",
+  title: "DAFS Sarlu | Agence immobilière, architecture et services",
+  description: "Agence immobilière à Kinshasa : locations, maisons et parcelles à vendre, plans architecturaux et services proposés par DAFS Sarlu.",
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#14263D",
+  themeColor: "#0D3D73",
   width: "device-width",
   initialScale: 1,
 };

@@ -659,8 +659,12 @@ const nav: { label: string; page: Page }[] = [
 
 function Logo({ light = false, onClick }: { light?: boolean; onClick?: () => void }) {
   return (
-    <button className={`logo${light ? " logo-footer" : ""}`} aria-label="DAFS Sarlu, accueil" onClick={onClick}>
+    <button className={`logo${light ? " logo-footer" : ""}`} aria-label="DAFS Sarlu, agence immobilière, accueil" onClick={onClick}>
       <img className="logo-image" src="/brand/dafs-sarlu-logo.jpeg" alt="DAFS Sarlu" />
+      <span className="logo-descriptor" aria-hidden="true">
+        <span>Agence</span>
+        <strong>immobilière</strong>
+      </span>
     </button>
   );
 }
@@ -966,7 +970,7 @@ function HomePage({
         <div className="hero-shade" />
         <div className="container hero-content">
           <span className="hero-kicker">
-            <span /> Immobilier · architecture · services
+            <span /> Agence immobilière · architecture · services
           </span>
           <h1>
             {settings.home_title?.split("\n")[0] || "Trouvez votre espace."}
@@ -977,7 +981,7 @@ function HomePage({
             {settings.home_intro || "Immobilier, architecture et services : découvrez les offres publiées par DAFS Sarlu et trouvez l’accompagnement adapté à votre projet."}
           </p>
           <div className="hero-actions">
-            <button className="btn gold" onClick={() => go("rentals")}>
+            <button className="btn orange" onClick={() => go("rentals")}>
               Explorer les biens <Icon name="arrow" />
             </button>
             <button className="btn glass" onClick={() => go("plans")}>
@@ -1160,7 +1164,7 @@ function HomePage({
             title="Dessiner aujourd'hui les espaces de demain."
             text={plans.length ? "Explorez les modèles publiés par DAFS Sarlu." : "Les plans architecturaux seront présentés ici dès leur publication."}
           />
-          <button className="btn gold" onClick={() => go("plans")}>
+          <button className="btn orange" onClick={() => go("plans")}>
             Explorer les modèles <Icon name="arrow" />
           </button>
           <button className="btn glass" onClick={() => go("construction")}>
