@@ -283,6 +283,7 @@ textarea:focus-visible {
   line-height: 1.08;
   font-weight: 600;
 }
+.hero h1.hero-home-title .hero-home-brand { color: #fff; }
 .hero h1.hero-home-title em { color: inherit; font-style: normal; }
 .hero h1 {
   font-size: clamp(48px, 5.5vw, 78px);

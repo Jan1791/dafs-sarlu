@@ -1004,7 +1004,7 @@ function HomePage({
             <span /> Immobilier - Architecture - Déménagement &amp; Aménagement - Cleaner.
           </span>
           <h1 className="hero-home-title">
-            {settings.home_title?.split("\n")[0] || "Trouvez votre espace."}
+            <span className="hero-home-brand">{settings.home_title?.split("\n")[0] || "Trouvez votre espace."}</span>
             <br />
             <em>{settings.home_title?.split("\n").slice(1).join(" ") || "Imaginez votre avenir."}</em>
           </h1>
