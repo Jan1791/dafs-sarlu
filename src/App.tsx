@@ -119,6 +119,8 @@ type IconName =
   | "search"
   | "shield"
   | "sparkle"
+  | "sun"
+  | "moon"
   | "whatsapp";
 
 function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
@@ -217,6 +219,13 @@ function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
         <path d="m20 20-4-4" />
       </>
     ),
+    sun: (
+      <>
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42" />
+      </>
+    ),
+    moon: <path d="M20.9 13.1A8.5 8.5 0 0 1 10.9 3.1 8.5 8.5 0 1 0 20.9 13.1Z" />,
     shield: (
       <>
         <path d="M12 3 5 6v5c0 5 3 8 7 10 4-2 7-5 7-10V6l-7-3Z" />
@@ -669,7 +678,19 @@ function Logo({ light = false, onClick }: { light?: boolean; onClick?: () => voi
   );
 }
 
-function Header({ page, go, whatsappHref }: { page: Page; go: (p: Page) => void; whatsappHref: string }) {
+function Header({
+  page,
+  go,
+  whatsappHref,
+  theme,
+  onToggleTheme,
+}: {
+  page: Page;
+  go: (p: Page) => void;
+  whatsappHref: string;
+  theme: "light" | "dark";
+  onToggleTheme: () => void;
+}) {
   const [open, setOpen] = useState(false);
   return (
     <header className="site-header">
@@ -687,6 +708,16 @@ function Header({ page, go, whatsappHref }: { page: Page; go: (p: Page) => void;
             </button>
           ))}
         </nav>
+        <button
+          className="theme-toggle"
+          type="button"
+          aria-label={theme === "dark" ? "Passer au thème jour" : "Passer au thème nuit"}
+          aria-pressed={theme === "dark"}
+          title={theme === "dark" ? "Passer au thème jour" : "Passer au thème nuit"}
+          onClick={onToggleTheme}
+        >
+          <Icon name={theme === "dark" ? "sun" : "moon"} size={18} />
+        </button>
         <a className="contact-header" href={whatsappHref || "#contact"} target={whatsappHref ? "_blank" : undefined} rel={whatsappHref ? "noreferrer" : undefined} onClick={!whatsappHref ? (event) => { event.preventDefault(); go("contact"); } : undefined}>
           <Icon name="chat" size={17} /> Nous contacter
         </a>
@@ -969,8 +1000,8 @@ function HomePage({
         <div className="hero-artwork"><img src={heroImage} alt={heroAlt} /></div>
         <div className="hero-shade" />
         <div className="container hero-content">
-          <span className="hero-kicker">
-            <span /> Agence immobilière · architecture · services
+          <span className="hero-kicker hero-kicker-tagline">
+            <span /> Agence immobilière au service de vos projets.
           </span>
           <h1>
             {settings.home_title?.split("\n")[0] || "Trouvez votre espace."}
@@ -2012,6 +2043,8 @@ export default function App({
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [themeReady, setThemeReady] = useState(false);
   const [page, setPage] = useState<Page>(() => pageFromPath(pathname));
   const [properties, setProperties] = useState<PropertyListing[]>(initialProperties);
   const [plans, setPlans] = useState<ArchitecturalPlan[]>(initialPlans);
@@ -2019,6 +2052,28 @@ export default function App({
   const [services, setServices] = useState<PublicService[]>(initialServices);
   const [propertiesLoading, setPropertiesLoading] = useState(false);
   const [propertiesLoadError, setPropertiesLoadError] = useState(initialDataError);
+
+  useEffect(() => {
+    try {
+      const savedTheme = window.localStorage.getItem("dafs-color-theme");
+      if (savedTheme === "dark" || savedTheme === "light") setTheme(savedTheme);
+    } catch {
+      // Use the light theme when browser storage is unavailable.
+    }
+    setThemeReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!themeReady) return;
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "dark" ? "#0B1320" : "#0D3D73");
+    try {
+      window.localStorage.setItem("dafs-color-theme", theme);
+    } catch {
+      // The theme remains available for the current session if storage is disabled.
+    }
+  }, [theme, themeReady]);
 
   useEffect(() => {
     let active = true;
@@ -2300,8 +2355,14 @@ export default function App({
     system: <SystemPage go={go} />,
   };
   return (
-    <div className="app">
-      <Header page={page} go={go} whatsappHref={createWhatsAppHref(initialSettings)} />
+    <div className="app" data-theme={theme}>
+      <Header
+        page={page}
+        go={go}
+        whatsappHref={createWhatsAppHref(initialSettings)}
+        theme={theme}
+        onToggleTheme={() => setTheme((current) => current === "light" ? "dark" : "light")}
+      />
       {content[page]}
       <Footer go={go} settings={initialSettings} />
       {page !== "contact" && <button className="float-contact" onClick={() => go("contact")} aria-label="Contacter DAFS Sarlu"><Icon name="chat" /></button>}
