@@ -481,6 +481,27 @@ export const starterProperties: PropertyListing[] = [
     address: "Ngaliema, secteur Ozone Champ de Tir · adresse exacte à confirmer",
     images: newsListingImages("ngaliema-ozone-champ-tir", 4, 1, "Ngaliema, Ozone Champ de Tir"),
   },
+  {
+    id: "00000000-0000-4000-8000-000000000205",
+    reference: "DAFS-NGM-001",
+    name: "Maisons locatives et terrain à vendre à Ngaliema, Musey",
+    city: "Kinshasa, Ngaliema, Mbinza Ozone, quartier Musey",
+    type: "Maison · Vente",
+    meta: "3 lots bâtis · 1 terrain nu · 60 000–95 000 $US par lot",
+    price: "60 000–95 000 $US par lot · à discuter",
+    priceAmount: 60000,
+    isNegotiable: true,
+    currency: "USD",
+    pricingPeriod: "fixed",
+    image: "/property-media/news/ngaliema-musey/cover.jpg",
+    description: "Vente de quatre morcellements dans le quartier Musey, à Mbinza Ozone, commune de Ngaliema, en diagonale de Champ de Tir. Trois lots comprennent des maisons destinées à la location : un lot de 6 m × 19,70 m avec 2 portes, annoncé à 95 000 USD ; un lot de 6 m × 19,70 m avec 2 chambres et un salon, annoncé à 95 000 USD à discuter ; et un lot de 9 m × 14,60 m avec 2 portes, annoncé à 95 000 USD à discuter. Le quatrième lot est un terrain nu, annoncé à 60 000 USD à discuter. Document annoncé : fiche parcellaire. Dimensions, limites des lots, disponibilité et document à vérifier auprès de DAFS Sarlu. Visites sur demande.",
+    bedrooms: null,
+    bathrooms: null,
+    livingArea: null,
+    landArea: null,
+    address: "En diagonale de Champ de Tir · quartier Musey · adresse exacte à confirmer",
+    images: newsListingImages("ngaliema-musey", 0, 1, "Ngaliema, quartier Musey"),
+  },
 ];
 
 function propertyTarget(type: string): Page {
@@ -2134,7 +2155,7 @@ export default function App({
         const type = [category, operation].filter(Boolean).join(" · ");
         const areas = [row.living_area_m2 && `${row.living_area_m2} m²`, row.land_area_m2 && `Terrain ${row.land_area_m2} m²`].filter(Boolean);
         const rooms = [row.bedrooms && `${row.bedrooms} chambres`, row.bathrooms && `${row.bathrooms} salles d’eau`].filter(Boolean);
-        const meta = [...areas, ...rooms].join(" · ") || "Détails disponibles sur demande";
+        const meta = [...areas, ...rooms].join(" · ") || row.short_description || "Détails disponibles sur demande";
         const location = [row.city, row.municipality, row.neighborhood].filter(Boolean).join(", ");
         const amount = row.price_amount && row.currency
           ? new Intl.NumberFormat("fr-FR", { style: "currency", currency: row.currency }).format(row.price_amount)

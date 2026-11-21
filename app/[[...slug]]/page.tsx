@@ -129,7 +129,7 @@ async function loadPublishedContent(): Promise<{
         name: row.title,
         city: [row.city, row.municipality, row.neighborhood].filter(Boolean).join(", "),
         type,
-        meta: [...areas, ...rooms].join(" · ") || "Détails disponibles sur demande",
+        meta: [...areas, ...rooms].join(" · ") || row.short_description || "Détails disponibles sur demande",
         price: `${amount}${period}${row.is_negotiable ? " · à discuter" : ""}`,
         priceAmount: row.price_amount,
         isNegotiable: row.is_negotiable,

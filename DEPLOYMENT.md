@@ -67,7 +67,7 @@ Les aperçus publics de plans sont pris dans le bucket public ; les fichiers ori
 
 Avant le transfert au client, valider avec lui les points suivants :
 
-1. Toutes les migrations Supabase jusqu’à `202611180003` sont appliquées et l’import **Importer les médias du projet** est terminé dans l’admin.
+1. Toutes les migrations Supabase jusqu’à `202611210001` sont appliquées et l’import **Importer les médias du projet** est terminé dans l’admin.
 2. Les deux URL Vercel définitives, les variables d’environnement, Turnstile, les redirections Auth et l’envoi/récupération de mot de passe sont vérifiés.
 3. Faire une recette navigateur/mobile : formulaires de contact avec CAPTCHA, navigation et galeries, publication/retrait d’un média, modification d’annonce/plan et affichage public, puis installation des deux PWA.
 4. Le client confirme les prix, descriptions et informations légales, les visuels autorisés à publier, ainsi que les options de nettoyage réellement proposées.

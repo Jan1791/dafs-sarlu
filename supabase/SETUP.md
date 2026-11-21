@@ -20,6 +20,7 @@ Dans le tableau de bord Supabase, ouvrir **SQL Editor** et exécuter les fichier
 12. `migrations/202611180001_news_property_listings.sql` ajoute les quatre annonces du dossier `src/img/A-VENDRE/NEWS` et leurs galeries de photos/vidéos.
 13. `migrations/202611180002_site_gallery_management.sql` active la gestion des plans architecturaux et de la galerie Construction, puis importe les plans, vues et médias de chantier déjà présents sur le site.
 14. `migrations/202611180003_register_all_project_media.sql` ajoute les médias d’aménagement à la bibliothèque admin et autorise les vidéos de visite des biens dans Storage.
+15. `migrations/202611210001_ngaliema_musey_listing.sql` ajoute la fiche de vente des lots de Ngaliema-Musey et leur vidéo de visite.
 
 ## Créer le premier compte administrateur
 
@@ -61,9 +62,9 @@ Pour les migrations de contenu ajoutées par la suite, exécuter chaque fichier 
 
 Après la migration 13, l’admin peut modifier chaque fiche de plan, ajouter ou retirer ses vues, et classer, publier ou supprimer les médias de Construction. Les contenus initiaux pointent vers les fichiers versionnés du site; leurs fiches peuvent être retirées de l’admin sans effacer ces fichiers du dépôt.
 
-Après la migration 14 et le déploiement de l’admin, **Services & médias → Bibliothèque médias → Importer les médias du projet** transfère les fichiers existants vers les buckets Supabase adaptés et met à jour leurs références dans les annonces, les plans et la bibliothèque. L’import est reprenable : les références déjà migrées sont ignorées. Le projet contient environ 200 Mo de médias.
+Après les migrations 14 et 15 et le déploiement de l’admin, **Services & médias → Bibliothèque médias → Importer les médias du projet** transfère les fichiers existants vers les buckets Supabase adaptés et met à jour leurs références dans les annonces, les plans et la bibliothèque. L’import est reprenable : les références déjà migrées sont ignorées. Le projet contient environ 200 Mo de médias.
 
-Les fichiers sources de `src/img` ne sont pas versionnés. Les médias retenus pour les annonces `A-VENDRE/NEWS` et le service `AMENAGEMENT` sont normalisés et versionnés dans `public/property-media/news` et `public/service-media/moving` pour l’affichage public. Les quatre annonces sont enregistrées par la migration 12. Pour pouvoir ensuite gérer les médias d’aménagement depuis **Admin → Services & médias → Bibliothèque médias**, il faudra importer le dossier correspondant dans Supabase Storage puis retirer le secours statique du site.
+Les fichiers sources de `src/img` ne sont pas versionnés. Les médias retenus pour les annonces `A-VENDRE/NEWS` et le service `AMENAGEMENT` sont normalisés et versionnés dans `public/property-media/news` et `public/service-media/moving` pour l’affichage public. Les annonces NEWS sont enregistrées par les migrations 12 et 15. Pour pouvoir ensuite gérer les médias d’aménagement depuis **Admin → Services & médias → Bibliothèque médias**, il faudra importer le dossier correspondant dans Supabase Storage puis retirer le secours statique du site.
 
 L’inspection des aperçus classe `AMENAGEMENT` comme déménagement/aménagement, `CONSTRUCTION` comme chantier et `PLAN-3D` comme architecture. Aucun lot n’identifie clairement des opérations de nettoyage : les photos de cette catégorie doivent être confirmées par le client avant d’être associées à Cleaner et publiées.
 
